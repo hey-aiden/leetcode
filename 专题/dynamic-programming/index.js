@@ -53,3 +53,93 @@ var maxEnvelopes = function (envelopes) {
     }
     return Math.max(...dp)
 }
+
+/**
+ * 72. 编辑距离: 给你两个单词 word1 和 word2， 请返回将 word1 转换成 word2 所使用的最少操作数
+ * 输入：word1 = "horse", word2 = "ros" 输出：3
+ * 解释： horse -> rorse (将 'h' 替换为 'r') rorse -> rose (删除 'r') rose -> ros (删除 'e')
+ *
+ * 构造DP-table; dp[row]对应word2的编辑字符； dp[x][col]对应word1的编辑字符；
+ * word 2: /  0  r  o  s
+ * word 1: 0  0  1  2  3
+ *         h  1  1  2  3
+ *         o  2  2
+ *         r  3
+ *         s  4
+ *         e  5
+ * @param {string} word1
+ * @param {string} word2
+ * @return {number}
+ */
+var minDistance = function (word1, word2) {
+    const txt1 = ' ' + word1
+    const txt2 = ' ' + word2
+    const rowLen = txt1.length
+    const colLen = txt2.length
+    // 完成DP-table初始值填充; 填充的是路径步骤，而不是对应的字符
+    const Dp = []
+    for (let i = 0; i < rowLen; i++) {
+        Dp[i] = []
+        Dp[i][0] = i
+    }
+    for (let j = 0; j < colLen; j++) {
+        Dp[0][j] = j
+    }
+
+    for (let r = 1; r < rowLen; r++) {
+        for (let col = 1; col < colLen; col++) {
+            if (txt1[r] === txt2[col]) {
+                // 遇到相同字符串 - 跳过; 此时的编辑距离 = 上一轮的编辑距离
+                Dp[r][col] = Dp[r - 1][col - 1]
+            } else {
+                // 题意是要将word1 转换成word2;
+                // 需要增: Dp[r][col-1]，删: Dp[r-1][col] + 1，替换:Dp[r - 1][col - 1] + 1
+                /**
+                 * 为什么增是： Dp[r][col-1] + 1; 因为 Dp[r][col-1]对应的是同row操作，意味着word1需要更新为Dp[r][col]
+                 * 为什么删是： Dp[r-1][col] + 1; 因为 Dp[r-1][col]对应的是对Col操作，意味着word2移除一个匹配word1;
+                 */
+                Dp[r][col] = Math.min(Dp[r - 1][col] + 1, Dp[r][col - 1] + 1, Dp[r - 1][col - 1] + 1)
+            }
+        }
+    }
+    return Dp[rowLen - 1][colLen - 1]
+}
+
+/**
+ * 516. 最长回文子序列: 给你一个字符串 s ，找出其中最长的回文子序列，并返回该序列的长度。
+ * 子序列定义为：不改变剩余字符顺序的情况下，删除某些字符或者不删除任何字符形成的一个序列。
+ * 输入：s = "bbbab" 输出：4 解释：一个可能的最长回文子序列为 "bbbb" ;
+ * 输入：s = "cbbd" 输出：2 解释：一个可能的最长回文子序列为 "bb" 。
+ * @param {string} s
+ * @return {number}
+ */
+var longestPalindromeSubseq = function (s) {
+    /**
+     * 基于 Dp[i][j]表示子串s[i...j]中，回文子序列的最大长度
+     * 构建 Dp-table:
+	 *         j:
+     *         b  b  a  b
+     *      b  1  1  1  1
+     * i:   b  1  1
+     *      a  1  0  1  
+     *      b  1  0  0  1
+     */
+    const loopLen = s.length
+    const dp = Array.from(Array(loopLen), () => Array(loopLen).fill(0))
+    for (let i = 0; i < loopLen; i++) {
+        dp[i][i] = 1
+    }
+	// 初始的i无论是 loopLen-1 还是 loopLen-2，都是可以的； 不过既然j = i + 1; 那么从 loopLen - 2开始遍历，可以少一次
+    for (let i = loopLen - 2; i >= 0; i--) {
+        for (let j = i + 1; j < loopLen; j++) {
+            if (s[i] === s[j]) {
+                dp[i][j] = dp[i + 1][j - 1] + 2
+            } else {
+                dp[i][j] = Math.max(dp[i + 1][j], dp[i][j - 1])
+            }
+        }
+    }
+
+	// dp[0][loopLen-1]意味着是从字符串0 ~ loopLen-1的区间，也就是整个字符串
+    return dp[0][loopLen - 1]
+}
