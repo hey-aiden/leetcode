@@ -1,4 +1,22 @@
 /**
+ * 动态规划：
+ * 1. 找出状态转移方程：
+ * 2. 找出初始化状态：
+ * 3. 找出边界情况：
+ * 4. 找出最优解： -- 状态压缩
+ *
+ * 最优子结构和dp遍历方向
+ * 最优子结构：子问题之间必须互相独立 ， 不能有依赖关系;
+ * 最优子结构作为动态规划问题的必要条件，一定是让你求最值的;以后碰到最值题，先思考一下暴力穷举的复杂度，如果复杂度爆炸的话，思路往动态规划想就对了，这就是套路。
+ *
+ * 找最优子结构的过程，其实就是证明状态转移方程正确性的过程，方程符合最优子结构就可以写暴力解，写出 暴力解就可以看出有没有重叠子问题，有则优化；这也是套路。
+ *
+ * dp遍历方向：
+ * 1. 遍历的过程中，所需的状态必须是已经计算出来的；
+ * 2. 遍历的终点必须是存储结果的那个位置；
+ */
+
+/**
  * 300. 最长递增子序列: 给你一个整数数组 nums ，找到其中最长严格递增子序列的长度。
  * 子序列 是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。例如，[3,6,2,7] 是数组 [0,3,1,6,2,2,7] 的子序列。
  * 输入：nums = [10,9,2,5,3,7,101,18] 输出：4 解释：最长递增子序列是 [2,3,7,101]，因此长度为 4 。
@@ -52,4 +70,117 @@ var maxEnvelopes = function (envelopes) {
         }
     }
     return Math.max(...dp)
+}
+
+/**
+ * 53. 最大子数组和: 给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+ * 子数组是数组中的一个连续部分。
+ * 输入：nums = [-2,1,-3,4,-1,2,1,-5,4] 输出：6 解释：连续子数组 [4,-1,2,1] 的和最大，为 6 。
+ * @param {number[]} nums
+ * @return {number}
+ */
+var maxSubArray = function (nums) {
+    // dp[i]为nums[i]时的最大子数组和；那么dp[i+1] = Math.max(nums[i], dp[i] + nums[i])
+    // const dp = []
+    // dp[0] = nums[0]
+    // const len = nums.length
+    // let res = dp[0]
+    // for (let i = 1; i < len; i++) {
+    //     dp[i] = Math.max(nums[i], nums[i] + dp[i - 1])
+    //     res = Math.max(res, dp[i])
+    // }
+    // return res
+
+    // 状态压缩
+    let dp_0 = nums[0]
+    let dp_1 = 0
+    let res = dp_0
+    for (let i = 1; i < nums.length; i++) {
+        dp_1 = Math.max(nums[i], nums[i] + dp_0)
+        dp_0 = dp_1
+        res = Math.max(res, dp_1)
+    }
+    return res
+}
+
+/**
+ * 1143. 最长公共子序列: 给定两个字符串 text1 和 text2，返回这两个字符串的最长 公共子序列 的长度。如果不存在 公共子序列 ，返回 0 。
+ * 一个字符串的 子序列 是指这样一个新的字符串：它是由原字符串在不改变字符的相对顺序的情况下删除某些字符（也可以不删除任何字符）后组成的新字符串
+ * 例如，"ace" 是 "abcde" 的子序列，但 "aec" 不是 "abcde" 的子序列。
+ * 两个字符串的 公共子序列 是这两个字符串所共同拥有的子序列。
+ *
+ * 输入：text1 = "abcde", text2 = "ace" 输出：3 解释：最长公共子序列是 "ace" ，它的长度为 3 。
+ * 输入：text1 = "abc", text2 = "abc" 输出：3 解释：最长公共子序列是 "abc" ，它的长度为 3 。
+ *  text2:    0 a b c d e
+ *  text1:  0 0 0 0 0 0 0
+ *          a 0 1 1 1 1 1
+ *          c 0 1 1 2 2 2
+ *          e 0 1 1 2 2 3
+ * @param {string} text1
+ * @param {string} text2
+ * @return {number}
+ */
+var longestCommonSubsequence = function (text1, text2) {
+    /**
+     * 以下这段是错误解法: 因为对于dp[i-1][j]和dp[i][j-1]而言，是不应该在txt1[i]===txt2[j]时累加的，这样的会导致部分字符被重复使用。
+     * 比如在dp[i][j]时用了dp[i][j-1]; 后续遍历到dp[i+1][j]时，同样会读取dp[i][j-1]; 也就是一个字符被重复使用了；
+     * 而如果仅在txt1[i]===txt2[j]时，从dp[i-1][j-1]上+1；则是从两个字符公共部分累加，避免了对字符成重复判断。
+     * 也就是说，对角线才是递进的值，而dp[i-1][j]和dp[i][j-1]，是作为最佳路线的取舍。
+     */
+    // let txt1 = ' ' + text1
+    // let txt2 = ' ' + text2
+    // const rowLen = txt1.length
+    // const colLen = txt2.length
+
+    // const dp = []
+
+    // for (let i = 0; i < rowLen; i++) {
+    //     dp[i] = []
+    //     dp[i][0] = 0
+    // }
+    // for (let j = 0; j < colLen; j++) {
+    //     dp[0][j] = 0
+    // }
+    // let res = 0
+    // for (let i = 1; i < rowLen; i++) {
+    //     for (let j = 1; j < colLen; j++) {
+    //         const step = txt1[i] === txt2[j] ? 1 : 0
+    //         dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+    //         res = Math.max(res, dp[i][j])
+    //         res += step
+    //     }
+    // }
+    // return res
+
+    let txt1 = ' ' + text1
+    let txt2 = ' ' + text2
+    const rowLen = txt1.length
+    const colLen = txt2.length
+
+    const dp = []
+
+    for (let i = 0; i < rowLen; i++) {
+        dp[i] = []
+        dp[i][0] = 0
+    }
+    for (let j = 0; j < colLen; j++) {
+        dp[0][j] = 0
+    }
+    let res = 0
+    for (let i = 1; i < rowLen; i++) {
+        for (let j = 1; j < colLen; j++) {
+            // 状态转移公式: dp[i][j] 表示 text1 的前 i 个字符 和 text2 的前 j 个字符 的最长公共子序列长度。
+            if (txt1[i] === txt2[j]) {
+                /**
+                 * 为什么字符相等时来自左上角 - dp[i - 1][j - 1] ？
+                 * 只能去左上角找（dp[i-1][j-1]），因为左上角对应的是这两个字符之前的所有内容：
+                 * 再把当前这一对匹配字符接到末尾，因此得到 dp[i-1][j-1] + 1。这也是 LCS 状态转移的本质 (一个字符只能使用一次)
+                 */
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+            }
+        }
+    }
+    return dp[rowLen - 1][colLen - 1]
 }
