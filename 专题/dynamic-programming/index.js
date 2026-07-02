@@ -117,11 +117,11 @@ var longestPalindromeSubseq = function (s) {
     /**
      * 基于 Dp[i][j]表示子串s[i...j]中，回文子序列的最大长度
      * 构建 Dp-table:
-	 *         j:
+     *         j:
      *         b  b  a  b
      *      b  1  1  1  1
      * i:   b  1  1
-     *      a  1  0  1  
+     *      a  1  0  1
      *      b  1  0  0  1
      */
     const loopLen = s.length
@@ -129,7 +129,15 @@ var longestPalindromeSubseq = function (s) {
     for (let i = 0; i < loopLen; i++) {
         dp[i][i] = 1
     }
-	// 初始的i无论是 loopLen-1 还是 loopLen-2，都是可以的； 不过既然j = i + 1; 那么从 loopLen - 2开始遍历，可以少一次
+    // 构造之后的dp数组示例，对应字符串是："bbbab"
+    // [
+    // 	[ 1, 0, 0, 0, 0 ],
+    // 	[ 0, 1, 0, 0, 0 ],
+    // 	[ 0, 0, 1, 0, 0 ],
+    // 	[ 0, 0, 0, 1, 0 ],
+    // 	[ 0, 0, 0, 0, 1 ]
+    //   ]
+    // 初始的i无论是 loopLen-1 还是 loopLen-2，都是可以的； 不过既然j = i + 1; 那么从 loopLen - 2开始遍历，可以少一次
     for (let i = loopLen - 2; i >= 0; i--) {
         for (let j = i + 1; j < loopLen; j++) {
             if (s[i] === s[j]) {
@@ -139,7 +147,15 @@ var longestPalindromeSubseq = function (s) {
             }
         }
     }
+    // 遍历之后的Dp-table，对应字符串是："bbbab",loopLen = 5
+    // [   b  b  b  a  b
+    //b  [ 1, 2, 3, 3, 4 ],
+    //b  [ 0, 1, 2, 2, 3 ],
+    //b	 [ 0, 0, 1, 1, 3 ],
+    //a  [ 0, 0, 0, 1, 1 ],
+    //b  [ 0, 0, 0, 0, 1 ]
+    //   ]
 
-	// dp[0][loopLen-1]意味着是从字符串0 ~ loopLen-1的区间，也就是整个字符串
+    // dp[0][loopLen-1]意味着是从字符串0 ~ loopLen-1的区间，也就是整个字符串
     return dp[0][loopLen - 1]
 }
