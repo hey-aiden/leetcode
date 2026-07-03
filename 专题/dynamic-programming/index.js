@@ -253,6 +253,13 @@ var longestPalindromeSubseq = function (s) {
      * i:   b  1  1
      *      a  1  0  1
      *      b  1  0  0  1
+     *
+     * 这里的dp-table表，其实映射的是dp[i][j]是对应的字符串区间坐标，也就是对应的(i,j)区间内的所有字符串子序列构成
+     * 比如对于长度 [i...j] 区间的字符串；可以构建的序列包括 [i, j],[i+1, j+1],....
+     * 而最终的状态转移公式 Dp[i][j] ，则表示：子串s[i...j]中，回文子序列的最大长度；所以递归遍历每一个序列下的最大长度；
+     * 已知单字符一定是回文子串，所以在Dp初始化的时候，对角线dp[i][i]一定是1；之后基于该模型，基于区间依赖的子区间，确定好遍历方向，从下往上 i--，从左往右 j++
+     *
+     * 可以参考当前函数下面的递归版本实现 line-299
      */
     const loopLen = s.length
     const dp = Array.from(Array(loopLen), () => Array(loopLen).fill(0))
@@ -288,4 +295,22 @@ var longestPalindromeSubseq = function (s) {
 
     // dp[0][loopLen-1]意味着是从字符串0 ~ loopLen-1的区间，也就是整个字符串
     return dp[0][loopLen - 1]
+}
+/** 最长回文子序列的递归版本: 跑 leetcode 会超时，递归次数太多了 */
+var longestPalindromeSubseq = function (s) {
+    const n = s.length
+
+    // i,j 对应的字符串区间，左闭右闭 - [i, j]
+    function dfs(i, j) {
+        if (i > j) return 0
+        if (i === j) return 1
+
+        if (s[i] === s[j]) {
+            return dfs(i + 1, j - 1) + 2
+        }
+
+        return Math.max(dfs(i + 1, j), dfs(i, j - 1))
+    }
+
+    return dfs(0, n - 1)
 }
