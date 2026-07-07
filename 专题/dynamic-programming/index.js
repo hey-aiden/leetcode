@@ -778,6 +778,9 @@ var coinChange = function (coins, amount) {
  * 例如，nums = [2, 1] ，可以在 2 之前添加 '+' ，在 1 之前添加 '-' ，然后串联起来得到表达式 "+2-1"
  * 返回可以通过上述方法构造的、运算结果等于 target 的不同 表达式 的数目
  * 
+ * 题解：
+ * 1. 在每个整数前添加+或者-,其实就是+=nums[i]和-=nums[i]
+ * 
  * 输入：nums = [1,1,1,1,1], target = 3 输出：5
 解释：一共有 5 种方法让最终目标和为 3 。
 -1 + 1 + 1 + 1 + 1 = 3
@@ -796,6 +799,24 @@ var findTargetSumWays = function (nums, target) {
      * 负整数数组 nums; 整数 target
      * 向数组中的每个整数前添加 '+' 或 '-' ，然后串联起所有整数，可以构造一个 表达式
      */
+
+    // 回溯
+    const len = nums.length
+    let res = 0
+    function trackBack(i, sum) {
+        if (i === len) {
+            if (sum === target) {
+                res++
+            }
+            return
+        }
+        for (let n = i; n < len; i++) {
+            trackBack(n + 1, sum + nums[n])
+            trackBack(n + 1, sum - nums[n])
+        }
+    }
+    trackBack(0, 0)
+    return res
 }
 
 /**
@@ -930,4 +951,45 @@ var rob = function (nums) {
     const pre = dp(nums.slice(0, n - 1))
     const tail = dp(nums.slice(1, n))
     return Math.max(pre, tail)
+}
+
+/**
+ * 337. 打家劫舍 III
+ * 除了 root 之外，每栋房子有且只有一个“父“房子与之相连。一番侦察之后，聪明的小偷意识到“这个地方的所有房屋的排列类似于一棵二叉树”。
+ * 如果 两个直接相连的房子在同一天晚上被打劫 ，房屋将自动报警
+ * 给定二叉树的 root 。返回 在不触动警报的情况下 ，小偷能够盗取的最高金额
+ * Definition for a binary tree node.
+ * function TreeNode(val, left, right) {
+ *     this.val = (val===undefined ? 0 : val)
+ *     this.left = (left===undefined ? null : left)
+ *     this.right = (right===undefined ? null : right)
+ * }
+ */
+/**
+ * @param {TreeNode} root
+ * @return {number}
+ */
+var rob = function (root) {
+    // root root.left root.right
+
+    const memo = new Map()
+
+    function dp(root) {
+        if (root === null) return 0
+
+        if (memo.get(root) !== undefined) {
+            return memo.get(root)
+        }
+
+        // 选择当前节点
+        const pick = root.val + (root.left === null ? 0 : dp(root.left.left) + dp(root.left.right)) + (root.right === null ? 0 : dp(root.right.left) + dp(root.right.right))
+        const skipPick = dp(root.left) + dp(root.right)
+
+        const res = Math.max(pick, skipPick)
+
+        memo.set(root, res)
+
+        return res
+    }
+    return dp(root)
 }
