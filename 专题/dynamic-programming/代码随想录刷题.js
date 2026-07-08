@@ -309,15 +309,18 @@ var integerBreak = function (n) {
      * 3. 找到递归公式
      * dp[n] = Math.max(  (n-1)*dp[n-1], (n-2)*dp[n-2], (n-3)*dp[n-3], ... )
      *
-     * 从1遍历j，然后有两种渠道得到dp[i].
+     * 从1开始遍历j，然后有两种渠道得到dp[i]:
+     * dp[3] = 1 * (3 - 1)   2 * (3 - 2)
+     * dp[4] = 1 * (4 - 1)  2 * (4 - 2)   3 * ( 4 - 3)
      * 一个是j * (i - j) 直接相乘
      * 一个是j * dp[i - j]，相当于是拆分(i - j)
      *
      *
      */
-    const dp = Array.from(n).fill(0)
+    const dp = Array.from(n).fill(1)
     dp[2] = 1
     for (let i = 3; i <= n; i++) {
+        // 由于拆分的对称性， j <= i / 2 即可，减少遍历次数。
         for (let j = 1; j < i; j++) {
             dp[i] = Math.max(dp[i], j * (i - j), j * dp[i - j])
         }
@@ -325,3 +328,13 @@ var integerBreak = function (n) {
 
     return dp[n]
 }
+
+/**
+ * 96. 不同的二叉搜索树
+ * 给你一个整数 n ，求恰由 n 个节点组成且节点值从 1 到 n 互不相同的 二叉搜索树 有多少种？返回满足题意的二叉搜索树的种数。
+ * 输入：n = 3 输出：5
+ * 输入：n = 1 输出：1
+ * @param {number} n
+ * @return {number}
+ */
+var numTrees = function (n) {}
