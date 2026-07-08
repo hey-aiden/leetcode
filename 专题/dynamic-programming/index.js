@@ -795,28 +795,59 @@ var coinChange = function (coins, amount) {
  * @return {number}
  */
 var findTargetSumWays = function (nums, target) {
-    /**
-     * 负整数数组 nums; 整数 target
-     * 向数组中的每个整数前添加 '+' 或 '-' ，然后串联起所有整数，可以构造一个 表达式
-     */
-
     // 回溯
-    const len = nums.length
-    let res = 0
-    function trackBack(i, sum) {
-        if (i === len) {
-            if (sum === target) {
-                res++
+    // const len = nums.length
+    // let res = 0
+    // function trackBack(i, sum) {
+    //     if (i === len) {
+    //         if (sum === target) {
+    //             res++
+    //         }
+    //         return
+    //     }
+    //     trackBack(i + 1, sum + nums[i])
+    //     trackBack(i + 1, sum - nums[i])
+    // }
+    // trackBack(0, 0)
+    // return res
+
+    /**
+     * 为什么最终转换成了背包问题：
+     * 对于nums数组，要构成target,假设将nums数组分成了正数部分之和P,负数部分之和N
+     * 满足： P + (-N) = target
+     * 同时： P + N = sum(nums)
+     * 两个公式相加：
+     *  P + (-N) +  P + N = target + sum(nums)
+     * 2P = target + sum(nums)
+     * P = (target + sum(nums)) / 2 -----> 从 nums 中选择一些数字，使它们的和等于 P，有多少种方法？  -------> 0/1 背包求方案数问题
+     *
+     *
+     * dp[sum] = dp[sum-nums[i]] + dp[nums[i]]
+     * dp[sum] = dp[sum+nums[i]] - dp[nums[i]]
+     */
+    const sum = nums.reduce((a, b) => a + b, 0)
+
+    if (sum < Math.abs(target) || (sum + target) % 2 == 1) return 0
+
+    function subsets(nums, sum) {
+        const n = nums.length
+        const dp = Array.from(Array(n + 1), () => Array(sum + 1).fill(0))
+        for (let i = 0; i <= n; i++) {
+            dp[i][0] = 1
+        }
+        for (let i = 1; i <= n; i++) {
+            for (let j = 0; j <= sum; j++) {
+                if (j >= nums[i - 1]) {
+                    dp[i][j] = dp[i - 1][j] + dp[i - 1][j - nums[i - 1]]
+                } else {
+                    dp[i][j] = dp[i - 1][j]
+                }
             }
-            return
         }
-        for (let n = i; n < len; i++) {
-            trackBack(n + 1, sum + nums[n])
-            trackBack(n + 1, sum - nums[n])
-        }
+        return dp[n][sum]
     }
-    trackBack(0, 0)
-    return res
+
+    return subsets(nums, (sum + target) / 2)
 }
 
 /**
