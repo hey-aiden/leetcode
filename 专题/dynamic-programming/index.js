@@ -835,6 +835,10 @@ var findTargetSumWays = function (nums, target) {
         for (let i = 0; i <= n; i++) {
             dp[i][0] = 1
         }
+        /**
+         * 1. 为什么初始化dp，用的长度是 n + 1，是为了增加一个空集合状态，对应dp[i][0] = 1; 回顾dp[i][j]的定义是：前 i 个元素中，组成 j 的方案数。
+         * 2. 基于i下标的定义，所以在比较中，需要用 i-1 来对遍历中的元素进行取值
+         */
         for (let i = 1; i <= n; i++) {
             for (let j = 0; j <= sum; j++) {
                 if (j >= nums[i - 1]) {
