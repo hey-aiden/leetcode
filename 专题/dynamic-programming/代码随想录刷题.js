@@ -337,4 +337,258 @@ var integerBreak = function (n) {
  * @param {number} n
  * @return {number}
  */
-var numTrees = function (n) {}
+var numTrees = function (n) {
+    /**
+     * 1. 确定状态和选择
+     * 二叉搜索树： 中序遍历是递增序列，左中右 => 找出所有递增序列的组合
+     * 选择：当前节点可以作为：root  n-1:root.left; n-1:root.right   n>=1
+     *
+     * 2. 确定dp数组及其下标的含义
+     * dp[1] = 1 : 当节点只有一个的时候，只会有一个节点，所以只有1种排列方式； [1]
+     * dp[2] = 2 :  dp[i-1] + root(2)  root.left = 2-1  root.right溢出   ----->   dp[2] = dp[i-1] + 1
+     *   1           2
+     *     2        1
+     * dp[3] = 5
+     *  1           2          2                 3             4           1                      3
+     *    2       1   3     1    4            2   4          3                   3           1
+     *      3          4        3            1              2                 2                 2
+     *       4          5                                  1
+     *        5
+     * dp[4] = 1,234;  12,34, 123,4,
+     *
+     *
+     * dp[i]   left: i-1  right: i+1
+     *
+     * 2. 递推公式 推导
+     *
+     * dp[1] = 1
+     * 1
+     *
+     *
+     * dp[2] = 2
+     *  1      2
+     *   2    1
+     *
+     *
+     * dp[3]
+     *   1         1            2                 3             3
+     *     2          3       1   3          1                2
+     *       3      2                          2            1
+     *
+     * 对于树型结构的组合来看，可以计算成：dp[root] = dp[roo.left] x dp[root.right] -> 左子树节点的组合 x 右子树节点的组合
+     *
+     * dp[1]: 对于root单节点，也就是单节点root树，此时节点组合方式=1； ------- 只有root单节点
+     * dp[2]: 对于root双节点，互为root节点, 此时节点组合方式=2；  ------ 此时左右子树都只有1个节点
+     * dp[3]: 当n遍历到3时，此时组合式 = dp[root-1]组合 + dp[root-2]组合 + dp[root-3]组合
+     *        当3为root时，左子树右两个节点，右子树0个节点
+     *
+     * 重新梳理理解，见dp[3]:
+     * 1. 当1为头结点时，右子树有两个节点，结构跟n=2时一样；
+     * 2. 当2为头结点时，左右子树都只有1个节点；
+     * 3. 当3为头结点时，左右子树都只有1个节点
+     *
+     * root-1: dp[left=0] x dp[right = 2] = dp[0] x dp[2]
+     * root-2: dp[left=1] x dp[right = 1] = dp[1] x dp[1]
+     * root-3: dp[left=2] x dp[right = 0] = dp[2] x dp[1]
+     *
+     * dp[i]: 区间[1...n]，到n时得二叉树组合个数
+     * j为[1...n]中每个可用作root节点的元素
+     * dp[i] += dp[以j为头结点左子树节点数量] * dp[以j为头结点右子树节点数量]
+     * dp[i] = dp[j-1] * dp[i-j]: j-1 为j为头结点左子树节点数量;  i-j 为以j为头结点右子树节点数量
+     * 由于是二叉搜索树，所以在区间[1...j...i]中，[1...j-1]都是作为左子树的元素；[j+1...i]都是作为右子树的元素 = i-j   [1,2,3,4,5]: j = 2时， i = 4； 此时左子树是
+     *
+     */
+    const dp = Array(n + 1).fill(0)
+    dp[0] = 1 //空二叉树也是搜索二叉树
+    // dp[1] = 1 // 如果i从1开始计算，那么dp[1]就不需要初始化了，不然dp[1]+=操作后，会变成dp[1] = 2
+    for (let i = 1; i <= n; i++) {
+        // 定义[j...i]区间; 计算每段[1...i]的涉及的节点数
+        for (let j = 1; j <= i; j++) {
+            dp[i] += dp[j - 1] * dp[i - j]
+        }
+    }
+    return dp[n]
+}
+
+/**
+ * 95. 不同的二叉搜索树 II
+ * 生成并返回所有由 n 个节点组成且节点值从 1 到 n 互不相同的不同 二叉搜索树 。可以按 任意顺序 返回答案。
+ *
+ * 输入：n = 3 输出：[[1,null,2,null,3],[1,null,3,2],[2,1,3],[3,1,null,null,2],[3,2,null,1]]
+ *
+ *  * function TreeNode(val, left, right) {
+ *     this.val = (val===undefined ? 0 : val)
+ *     this.left = (left===undefined ? null : left)
+ *     this.right = (right===undefined ? null : right)
+ * }
+ *
+ * @param {number} n
+ * @return {TreeNode[]}
+ */
+var generateTrees = function (n) {
+    if (n === 0) return null
+
+    function generateTree(start, end) {
+        if (start > end) return [null] // 该节点值溢出，用null填充
+
+        /**
+         *  res 保存的是区间 [start, end] 能构成的所有 BST(Binary Search Tree二叉树) 的根节点（root）
+         *  每个 root 都代表一棵完整的 BST。
+         */
+        const res = []
+
+        for (let i = start; i <= end; i++) {
+            // 递归生成左区间和右区间的所有 BST
+            const leftTrees = generateTree(start, i - 1)
+            const rightTrees = generateTree(i + 1, end)
+
+            // 将所有左子树与所有右子树进行组合
+            for (const left of leftTrees) {
+                for (const right of rightTrees) {
+                    // 收集所有的可能性： [left] x [right]
+                    const node = new TreeNode(i)
+                    node.left = left
+                    node.right = right
+                    res.push(node)
+                }
+            }
+        }
+        return res
+    }
+    return generateTree(1, n)
+}
+
+/**
+ * 分割等和子集： 给定一个非空的正整数数组 nums ，请判断能否将这些数字分成元素和相等的两部分。
+ *
+ * 输入：nums = [1,5,11,5] 输出：true 解释：nums 可以分割成 [1, 5, 5] 和 [11] 。
+ * 输入：nums = [1,2,3,5] 输出：false 解释：nums 不可以分为和相等的两部分
+ *
+ * @param {number[]} nums
+ * @return {boolean}
+ */
+var canPartition = function (nums) {
+    /**
+     *
+     * 从数组nums中，找到和为sum/2的子集，或者说从 数组 nums中，找到是否存在子集之和为 sum/2
+     *
+     * 1. 确定dp数组下标及其含义
+     * 找到在数组[0...i]中，满足和为j的子集
+     * 对于dp[i][j]; 当j=0时，意味着背包装满了，此时初始值为true
+     *       0        1         2          3         4
+     * 1   true     true      false      false       false
+     * 2   true
+     * 5   true
+     *
+     * 2. 递推公式
+     * 对于每个nums[i],都存在两种情况：
+     * 1. 加上当前nums[i]  dp[i][j] = dp[i-1][sum - nums[i-1]]
+     *    为什么是：dp[i-1][sum-nums[i-1]]:
+     *    首先： dp[i][j]的含义是： 对于区间[0,i],是否满足存在子集之和为j，这个和可以包含当前nums[i],也可以不包含nums[i]
+     *    1）：不取当前元素，即前一个元素中，是否已经存在该子集，满足[0,i-1]存在和为[j]的值，即：dp[i-1][j]的状态；
+     *    2)；如果要取当前元素nums[i],那么如果要满足dp[i][j]为true，则依赖 i-1是否存在和为 sum-nums[i]的子集，使得 dp[j-1][sum-nums[i]]的基础上，+nums[i] = sum；
+     *
+     * 边界： 对于当前nums[i]是否使用，还取决于j跟nums[i]大小对比；如果j<nums[i]，背包已经放不下了，那么就取决于上一个i-1的情况
+     *
+     * 2. dp数组初始化
+     * sum是从0开始，所以遍历每个nums是，对应的dp[i][0]应该是true，也就是当需要计算的子集之和是0时，存在的方案就是拿一个空集出来，也是一种方案，所以值为true;
+     *
+     */
+
+    let sum = nums.reduce((total, item) => (total += item), 0)
+
+    if (sum % 2 !== 0) return false // 奇数无法分割
+
+    sum = sum / 2 // 问题变成在nums数组中，能否找到和为sum的子集  0-1背包问题
+
+    const n = nums.length
+    const dp = Array.from(Array(n), () => Array(sum + 1).fill(false))
+
+    // 因为循环是从dp[1][0]开始的，所以dp[0][0]是需要初始化的
+    dp[0][0] = true
+
+    for (let i = 1; i < n; i++) {
+        dp[i][0] = true
+        for (let j = 1; j <= sum; j++) {
+            if (j < nums[i]) {
+                dp[i][j] = dp[i - 1][j]
+            } else {
+                dp[i][j] = dp[i - 1][j] || dp[i - 1][j - nums[i]]
+            }
+        }
+    }
+    return dp[n - 1][sum]
+}
+
+/**
+ * 1049. 最后一块石头的重量 II
+ * 有一堆石头，用整数数组 stones 表示。其中 stones[i] 表示第 i 块石头的重量。
+ * 每一回合，从中选出任意两块石头，然后将它们一起粉碎。
+ * 假设石头的重量分别为 x 和 y，且 x <= y。
+ * 那么粉碎的可能结果如下：
+ * 如果 x == y，那么两块石头都会被完全粉碎；
+ * 如果 x != y，那么重量为 x 的石头将会完全粉碎，而重量为 y 的石头新重量为 y-x。
+ * 最后，最多只会剩下一块 石头。返回此石头 最小的可能重量 。如果没有石头剩下，就返回 0。
+ * @param {number[]} stones
+ * @return {number}
+ */
+var lastStoneWeightII = function (stones) {
+    /**
+     * 理解题意：
+     * 每一回合，从中选出任意两块石头，然后将它们一起粉碎;
+     * 粉碎的状态取决于两块石头的重量
+     * 返回剩下的石头的最小可能重量
+     *
+     * 输入：stones = [2,7,4,1,8,1] 输出：1
+     * 解释： 组合 2 和 4，得到 2，所以数组转化为 [2,7,1,8,1]，
+     * 组合 7 和 8，得到 1，所以数组转化为 [2,1,1,1]，
+     * 组合 2 和 1，得到 1，所以数组转化为 [1,1,1]，
+     * 组合 1 和 1，得到 0，所以数组转化为 [1]，这就是最优值。
+     *
+     *    2  7  4  1  8  1
+     *
+     *
+     *    0  1  2  3  4  5  6
+     * 2  0  0  0  0  0  0  0
+     * 7 0
+     * 4 0
+     * 1 0
+     * 8 0
+     * 1 0
+     *
+     * 如果要使得最终粉碎后的重量最小，那么要使得拿出来的石头重量越接近sum/2
+     *
+     * dp[i][j] = x 表示在区间[0...i]中，得到组合之和为j的最大重量值为 x
+     *
+     * 递推公式：
+     * dp[i][j] = Math.max(dp[i-1][j], dp[i-1][j-stones[i]] + stones[i] )
+     *
+     * 初始化：
+     * dp[0][0] = 0
+     *
+     */
+    let sum = stones.reduce((total, item) => (total += item), 0)
+
+    const target = Math.floor(sum / 2) // 对target向下取整； 这里确保了 sum - target > target 的
+
+    const n = stones.length
+
+    const dp = Array.from(Array(n), () => Array(target + 1).fill(0))
+
+    for (let i = stones[0]; i <= target; i++) {
+        dp[0][i] = stones[0]
+    }
+
+    // dp[0] 已经初始化过了，所以直接从 dp[0] 开始遍历
+    for (let i = 1; i < n; i++) {
+        dp[i][0] = 0
+        for (let j = 0; j <= target; j++) {
+            if (j >= stones[i]) {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i - 1][j - stones[i]] + stones[i])
+            } else {
+                dp[i][j] = dp[i - 1][j]
+            }
+        }
+    }
+    return sum - dp[n - 1][target] - dp[n - 1][target]
+}
