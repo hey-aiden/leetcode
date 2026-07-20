@@ -704,7 +704,7 @@ var findTargetSumWays = function (nums, target) {
  * 输入：strs = ["10", "0001", "111001", "1", "0"], m = 5, n = 3 输出：4
  * 解释：最多有 5 个 0 和 3 个 1 的最大子集是 {"10","0001","1","0"} ，因此答案是 4 。
  * 其他满足题意但较小的子集包括 {"0001","1"} 和 {"10","1","0"} 。{"111001"} 不满足题意，因为它含 4 个 1 ，大于 n 的值 3 。
- * 
+ *
  * @param {string[]} strs
  * @param {number} m
  * @param {number} n
@@ -712,12 +712,465 @@ var findTargetSumWays = function (nums, target) {
  */
 var findMaxForm = function (strs, m, n) {
     /**
+     * 找规律：
+     * 对于字符串数组：["10", "0001", "111001", "1", "0"]
+     * 字符串包含'0'的统计序列是：[1,3,2,0,1]
+     * 字符串包含'1'的统计序列是：[1,1,4,1,0]
+     *
+     * 背包问题？ m x n的背包容量下的最大个数 ❎
+     *
+     * 选择和状态：对于字符串的选择，影响的是m,n的容量
+     * 每个字符串可以选，可以跳过；
+     * 选择后：基于当前字符串的m,n的数量增加；
+     * 跳过当前字符：基于上一个字符串的m,n数量
+     *
+     * 可以改为：选择当前字符后，在满足字符串'0'的前提下，满足字符串'1'要求的最大个数 ❎
+     *
+     * 对于[1,3,2,0,1]，组成<m的最长子集；
+     * 对于[1,1,4,1,0]，组成<n的最长子集；
+     * 不就是两个背包问题了吗，背包容量为m/n的最大字符串数量； 双重背包？
+     *
+     *
+     *
+     * 1. 明确dp数组及其下标的含义
+     * dp[i] 可以拿到最多子集的集合； 但是如何满足兼顾n的限制呢？
+     *
+     *
+     *
+     * 理解失误：
+     * 完整可以理解为是01背包问题，m/n对应的是背包，物品本身还是strs数组的子项
+     *
+     * 1. 确定dp数组，及其下标的含义
+     * dp[i][j]代码有i个0和j个1的字符串，所能包含的最大字符串子项个数
+     * 2. 初始化dp数组
+     * 数组初始化后，每一项为0
+     * 对于每个子项，str -> 包含i个0，j个1,都可以初始化为dp[i][j] = 1
+     */
+
+    const strLen = strs.length
+    function markStr(str) {
+        const len = str.length
+        let zeroCount = 0,
+            oneCount = 0
+        for (let i = 0; i < len; i++) {
+            if (str[i] == '0') {
+                zeroCount++
+            } else {
+                oneCount++
+            }
+        }
+        return {
+            zero: zeroCount,
+            one: oneCount,
+        }
+    }
+    const dp = Array.from(Array(m + 1), () => Array(n + 1).fill(0))
+    for (let i = 0; i < strLen; i++) {
+        const str = strs[i]
+        const { zero, one } = markStr(str)
+        for (let i = m; i >= zero; i--) {
+            for (let j = n; j >= one; j--) {
+                dp[i][j] = Math.max(dp[i][j], dp[i - zero][j - one] + 1)
+            }
+        }
+    }
+    return dp[m][n]
+
+    /**
      * 了解题意：
      * 1. 返回strs的最大子集的长度；
      * 2. strs[i] 是一个由 '0''1'组成的字符；
      * 3. 子集的'0'字符的总数<=m,'1'字符的总数<=n
-     * 
+     *
      * 1. 确定dp数组及其下标含义
-     * dp[i]表示区间[0,i]下，在满足[m,n]限制下的对应的最大子集个数
+     * dp[i]表示区间[0,i]下，在满足[m,n]限制下的对应的子集个数
+     *
+     * 需要校验 m,n 在当前区间的次数
+     *
+     * 输入：strs = ["10", "0001", "111001", "1", "0"]
+     *
+     * dp[0]: 1:1  0:1
+     * dp[1]: 1:1  0:3
+     * dp[2]: 1:4  0:2
+     * dp[3]: 1:1  0:0
+     * dp[4]: 1:0  0:1
+     *
+     * 构造两个数组：记录字符串0的数组：[1,3,2,0,1]； 记录字符串1的数组：[1,1,4,1,0];
+     * 基于这两个数组，找出满足[m,n]范围内的最多子集。
+     *
+     *      1      3       2       0       1
+     *
+     * 1  (1,1)  (1,4)   (1,6)   (1,6)   (2,6)
+     *
+     * 1  (2,1)  (2,4)   (2,6)   (2,6)   (2,6)
+     *
+     * 4  (6,1)  (3,6)   (1,6)   (1,6)   (2,6)
+     *
+     * 1  (7,1)  (1,3)   (1,6)   (1,6)   (2,6)
+     *
+     * 0  (7,1)  (1,3)   (1,6)   (1,6)   (2,6)
+     *
+     * 遍历的过程中，要取小的。
+     *
+     * ["10", "0001", "111001", "1", "0"]
+     * dp[m][n]: 满足m,n的最大子集： m代表0，n代表1
+     * m = 5, n = 3
+     * 字符串0：[1,3,2,0,1];
+     * 字符串1：[1,1,4,1,0];
+     * dp[1][1] = 1
+     * dp[3][1] = 1
+     * dp[2][4] = 1
+     * dp[0][1] = 1
+     * dp[1][0] = 1
+     *
+     * dp[i] = 遍历到i时，满足m,n的前提下，能选择的最大子集；
+     * 在遍历的过程中， 除了更新最大子集，还要更新最大子集的边界，也就是m,n的余量
+     * dp[0] = 1
+     * dp[1] = dp[0]
+     *
      */
+    // 遍历strs,将每一项的m,n信息标记
+    // const n = strs.length
+    // const strItems = []
+    // for (let i = 0; i < n; i++) {
+    //     strItems.push(markStr(strs[i]))
+    // }
+    // function markStr(str) {
+    //     let zeroCount = 0,
+    //         oneCount = 0
+    //     for (let i = 0; i < str.length; i++) {
+    //         if (str[i] === '1') {
+    //             oneCount++
+    //             return
+    //         }
+    //         zeroCount++
+    //     }
+    //     return {
+    //         zero: zeroCount,
+    //         one: oneCount,
+    //     }
+    // }
+    // 遍
+    // const zeroList = []
+    // const oneList = []
+    // const n = strs.length
+    // for(let i = 0; i < n; i++) {}
+}
+
+/**
+ * 518. 零钱兑换 II
+ * 给你一个整数数组 coins 表示不同面额的硬币，另给一个整数 amount 表示总金额
+ * 请你计算并返回可以凑成总金额的硬币组合数。如果任何硬币组合都无法凑出总金额，返回 0
+ * 假设每一种面额的硬币有无限个。
+ * @param {number} amount
+ * @param {number[]} coins
+ * @return {number}
+ */
+var change = function (amount, coins) {
+    /**
+     *
+     * 要返回的是组合数
+     *
+     * 1. 确定dp公式及其含义
+     * dp[amount] 表示凑成金额 amount 的组合
+     *
+     * 2. 确定递推公式
+     *
+     * dp[coins[i]] = Math.max(dp[coins[i]], dp[amount-coins[i]])
+     *
+     * 3. dp数组初始化：
+     * 对于每一个硬币的coins[i],对应的组合数都是1,dp[coin]初始值都是1
+     *
+     * dp[i] = dp[amount-i] + dp[i], dp[i]
+     *
+     *
+     * [1,2,5]  amount = 5
+     *
+     * 1 1
+     *
+     */
+
+    /**
+     * 1. 先定义2维dp
+     * dp[i][amount]: 在第i个硬币下，能凑成总额为amount的组合数
+     *
+     * 2. 递推公式
+     * 对于目标金额为j的组合，前i个硬币的组合数 = 前一个组合满足金额为j的组合，以及当前已有的金额为j-coins[i]的组合，意味着再补一个coins[i]即可，因为是完全背包，可以重复使用
+     * dp[i][j] = dp[i-1][j] + dp[i][j-coins[i]]
+     *
+     * 3. 初始化
+     * 对于每一个金额来说：dp[0][coins[i]] = 1
+     * 对于每一个目标金额0来说，dp[i][0] = 1
+     *   0  1  2  3  4
+     * 0
+     * 1
+     * 2
+     * 5
+     *
+     */
+    // const n = coins.length
+
+    // const dp = Array.from(Array(n), () => Array(amount + 1).fill(0))
+
+    // for (let i = 0; i < n; i++) {
+    //     dp[i][0] = 1
+    // }
+
+    // for (let j = 0; j <= amount; j++) {
+    //     if (j % coins[0] === 0) {
+    //         dp[0][j] = 1
+    //     }
+    // }
+
+    // for (let i = 1; i < n; i++) {
+    //     for (let j = 0; j <= amount; j++) {
+    //         if (coins[i] > j) {
+    //             dp[i][j] = dp[i - 1][j]
+    //         } else {
+    //             dp[i][j] = dp[i - 1][j] + dp[i][j - coins[i]]
+    //         }
+    //     }
+    // }
+
+    // return dp[n - 1][amount]
+
+    /**
+     * 一维dp
+     * dp[j]: 凑成总金额为j的组合数为dp[j]
+     * dp[j]的组合数 = dp[j - coins[i]]的组合数之和
+     *
+     * [1,2,5]  5
+     *
+     * i = 0, coins[i] = 1
+     * j = 1  j <= 5  dp[1] = dp[1] + dp[0] = 0 + 1 = 1
+     * j = 2  j <= 5  dp[2] = dp[2] + dp[1] = 0 + 1 = 1
+     * j = 3  j <= 5  dp[3] = dp[3] + dp[2] = 0 + 1 = 1
+     * j = 4  j <= 5  dp[4] = dp[4] + dp[3] = 0 + 1 = 1
+     * j = 5  j <= 5  dp[5] = dp[5] + dp[4] = 0 + 1 = 1
+     *
+     *
+     * i = 1, coins[i] = 2
+     * j = 2  2 <= 5  dp[2] = dp[2] + dp[0] = 1 + 1 = 2
+     * j = 3  3 <= 5  dp[3] = dp[3] + dp[1] = 1 + 1 = 2
+     * j = 4  4 <= 5  dp[4] = dp[4] + dp[2] = 1 + 2 = 3
+     * j = 5  5 <= 5  dp[5] = dp[5] + dp[3] = 1 + 2 = 3
+     *
+     * i = 2, coins[i] = 5
+     * j = 5  5 <= 5  dp[5] = dp[5] + dp[0] = 3 + 1 = 4
+     *
+     *
+     *
+     *
+     */
+    const n = coins.length
+    const dp = Array(amount + 1).fill(0)
+    dp[0] = 1
+    for (let i = 0; i < n; i++) {
+        for (let j = coins[i]; j <= amount; j++) {
+            dp[j] += dp[j - coins[i]]
+        }
+    }
+    return dp[amount]
+}
+
+/**
+ * 377. 组合总和 Ⅳ --- 有点像完全背包
+ * 给你一个由 不同 整数组成的数组 nums ，和一个目标整数 target
+ * 请你从 nums 中找出并返回总和为 target 的元素组合的个数。
+ * 输入：nums = [1,2,3], target = 4 输出：7
+ * 解释： 所有可能的组合为：
+ * (1, 1, 1, 1)
+ * (1, 1, 2)
+ * (1, 2, 1)
+ * (1, 3)
+ * (2, 1, 1)
+ * (2, 2)
+ * (3, 1)
+ * 请注意，顺序不同的序列被视作不同的组合。 * @param {number[]} nums
+ * @param {number} target
+ * @return {number}
+ */
+var combinationSum4 = function (nums, target) {
+    /**
+     * 找出所有总和为target的元素组合个数；
+     * 1. 确定dp数组及其下标的含义
+     * dp[i][target] = x; 第i个元素下，符合总和为target的组合个数为 x
+     *
+     * 最终返回：dp[len-1][target]
+     *
+     * 2. 递推公式
+     * dp[i][target] = dp[i-1][target] + dp[i][target - nums[i]]
+     *
+     * nums: [1,2,3]  target: 4
+     *    0  1  2  3  4
+     * 1  1  1
+     * 2  1
+     * 3  1
+     *
+     * dp[0][0] = 1
+     * dp[0][1] = 1
+     * dp[1][1] = dp[0][1] + dp[1][0] = 1
+     * dp[1][2] = dp[i-1][j] + dp[i][j-nums[i]] = dp[0][2] + dp[1][1]
+     *
+     *
+     *
+     * 重新设计：
+     * 1. dp数组定义
+     * dp[i]: 凑成目标为正整数i的排列个数为dp[i]；
+     *
+     * 2. 递推公式
+     * dp[i] = dp[i] += dp[i-nums[j]]
+     * 
+     * 以 nums:[1,2,3]; target:4 为例：
+     * dp[0] = 1
+     * 
+     * i = 1:
+     * j = 0  1>=1  dp[1]+=dp[0]  dp[1] = 1
+     * j = 1  1<2
+     * 
+     * i = 2:
+     * j = 0  2>=1 dp[2] += dp[1]  dp[2] = 1
+     * j = 1  2>=2 dp[2] += dp[0]  dp[2] = 2
+     * j = 2  2<3 
+     * 
+     * i = 3:
+     * j = 0  3>=1 dp[3] += dp[2]   dp[3] = 2
+     * j = 1  3>=2 dp[3] += dp[1]   dp[3] = 3
+     * j = 2  3>=3 dp[3] += dp[0]   dp[3] = 4
+     * 
+     * i = 4:
+     * j = 0  4>=1 dp[4] += dp[3]  dp[4] = 4
+     * j = 1  4>=2 dp[4] += dp[2]  dp[4] = 6
+     * j = 2  4>=3 dp[4] += dp[1]  dp[4] = 7
+     * 
+     * 
+     * 
+     * 1 >= nums[0]
+     * dp[1] += dp[0] : dp[1] = 1;
+  
+     *
+     */
+
+    const n = nums.length
+    const dp = Array(target + 1).fill(0)
+    dp[0] = 1
+    for (let i = 1; i <= target; i++) {
+        for (let j = 0; j < n; j++) {
+            if (i >= nums[j]) {
+                // 因为是要计算所有的排列，所以先遍历target，在每个target下，获取nums[i]的可能性
+                dp[i] += dp[i - nums[j]]
+            }
+        }
+    }
+    return dp[target]
+
+    // 二维dp - 不好实现
+    // const n = nums.length
+    // const dp = Array.from(Array(n), () => Array(target + 1).fill(0))
+
+    // for (let i = 0; i < n; i++) {
+    //     dp[i][0] = 1
+    // }
+    // for (let j = 1; j <= target; j++) {
+    //     // 先遍历背包
+    //     for (let i = 0; i < n; i++) {
+    //         if (j < nums[i]) {
+    //             dp[i][j] = dp[i - 1][j]
+    //         } else {
+    //             dp[i][j] = dp[i - 1][j] + dp[i][j - nums[i]]
+    //         }
+    //     }
+    // }
+    // return dp[n - 1][target]
+
+    // gpt版本：
+    var combinationSum4 = function (nums, target) {
+        const n = nums.length
+
+        const dp = Array.from({ length: target + 1 }, () => Array(n).fill(0))
+
+        for (let i = 1; i <= target; i++) {
+            for (let j = 0; j < n; j++) {
+                const num = nums[j]
+
+                if (i < num) continue
+
+                const remain = i - num
+
+                // 最后一位就是num
+                if (remain === 0) {
+                    dp[i][j] = 1
+                } else {
+                    // 枚举之前组成remain的所有情况
+                    for (let k = 0; k < n; k++) {
+                        dp[i][j] += dp[remain][k]
+                    }
+                }
+            }
+        }
+
+        let result = 0
+
+        for (let j = 0; j < n; j++) {
+            result += dp[target][j]
+        }
+
+        return result
+    }
+}
+
+/**
+ * LCR 103. 零钱兑换
+ * 给定不同面额的硬币 coins 和一个总金额 amount
+ * 编写一个函数来计算可以凑成总金额所需的最少的硬币个数。如果没有任何一种硬币组合能组成总金额，返回 -1。
+ *
+ * 输入：coins = [1, 2, 5], amount = 11 输出：3
+ * 解释：11 = 5 + 5 + 1
+ *
+ * @param {number[]} coins
+ * @param {number} amount
+ * @return {number}
+ */
+var coinChange = function (coins, amount) {
+    /**
+     * dp[i][j]：在硬币[0...i]中凑成金额为j的最小数量为dp[i][j]
+     *
+     * [j - coins[i]]，那么只需要加上一个钱币coins[i]即dp[j - coins[i]] + 1就是dp[j]（考虑coins[i]）
+     * 所以dp[j] 要取所有 dp[j - coins[i]] + 1 中最小的。
+     *
+     * 递推公式：dp[j] = min(dp[j - coins[i]] + 1, dp[j]);
+     *
+     * dp[i][j] = dp[i-1][j], dp[i][j-nums[i]] + 1
+     */
+
+    const n = coins.length
+    const dp = Array(amount + 1).fill(Infinity)
+    dp[0] = 0
+    for (let i = 0; i < n; i++) {
+        for (let j = coins[i]; j <= amount; j++) {
+            if (dp[j - coins[i]] !== Infinity) {
+                dp[j] = Math.min(dp[j], dp[j - coins[i]] + 1)
+            }
+        }
+    }
+    return dp[amount] === Infinity ? -1 : dp[amount]
+}
+
+/**
+ * 279. 完全平方数  给你一个整数 n ，
+ * 返回 和为 n 的完全平方数的最少数量
+ * 完全平方数 是一个整数，其值等于另一个整数的平方；换句话说，其值等于一个整数自乘的积。例如，1、4、9 和 16 都是完全平方数，而 3 和 11 不是。
+ *
+ * 输入：n = 12 输出：3
+ * 解释：12 = 4 + 4 + 4
+ *
+ * 输入：n = 13 输出：2
+ * 解释：13 = 4 + 9
+ *
+ * @param {number} n
+ * @return {number}
+ */
+var numSquares = function (n) {
+    
+
 }
