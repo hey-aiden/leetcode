@@ -964,7 +964,7 @@ var change = function (amount, coins) {
      */
     const n = coins.length
     const dp = Array(amount + 1).fill(0)
-    dp[0] = 1
+    dp[0] = 1 // 理解为此时金额为0，消耗到金额为0时，说明需要消耗当前硬币，所以遇到dp[0],需要+1，初始为 dp[0] = 1
     for (let i = 0; i < n; i++) {
         for (let j = coins[i]; j <= amount; j++) {
             dp[j] += dp[j - coins[i]]
@@ -1171,6 +1171,378 @@ var coinChange = function (coins, amount) {
  * @return {number}
  */
 var numSquares = function (n) {
-    
+    /**
+     * 返回 和为 n 的完全平方数的最少数量
+     *
+     * 1. [0...n]之间所有的完全平方数；
+     * 2. 找出这些完全平方数中，和为n的子集
+     */
+    let num1 = 1
+    const nums = [1]
 
+    while (num1 <= n) {
+        nums.push(num1 * num1)
+        num1++
+    }
+
+    /** 背包问题？ 完全背包
+     * 返回最少数量
+     * 在数组中找到和为n的最小子集
+     *
+     * [1,4,9,16] n=12
+     *
+     * 1. 确定dp数组：
+     * dp[i][sum]: 在[1...i]中组成和为sum的最小数量
+     *
+     * dp[0][0] = 0
+     * dp[1][1] = 1
+     *
+     *
+     *
+     * // Math.min 改为 Math.max 试试
+     * dp[i][sum] = Math.min(dp[i-1][sum], dp[i-1][sum-nums[i]] + 1)
+     * dp[1][1] = Math.min(dp[0][1], dp[0][0] + 1) = 1
+     * dp[1][2] = Math.min(dp[0][2], dp[0][1] + 1) = ?
+     *         12
+     *    1        4        9
+     * 1  4  9
+     *
+     * dp[i][sum] = Math.min(dp[i-1][sum], dp[i-1][sum-nums[i]] + 1)
+     * dp[1][1] = Math.min(dp[0][1], dp[0][0] + 1) = 1
+     * dp[1][4] = Math.min(dp[0][2], dp[0][1] + 1) = ?
+     *
+     * dp[1] = 1
+     * dp[4] = 1
+     * dp[9] = 1
+     *
+     *
+     * 最少子集 -> 走倒序试试
+     *
+     * dp[0] = 0
+     * dp[1] = 1
+     * dp[2] = dp[1] + dp[1] = 2
+     * dp[3]
+     *
+     * 先遍历背包：
+     * if(nums[i] > j) {
+     * }
+     *
+     * dp[i] += dp[sum - nums[i]]
+     *
+     * dp[2] += dp[2-1]
+     *
+     *    0  1  2  3  4
+     * 0  0  0  0  0  0  0
+     * 1  0  1  2  3  1
+     * 4  0
+     * 9  0
+     *
+     *
+     *
+     *
+     * 1,2,3,4,5,
+     * dp[j]: 和为j的最小完全平方数的最少数量
+     *
+     * 1. 使用当前遍历
+     *
+     * dp[j - i*i] + 1； 其实就是 dp[j] 由 i*i 组成
+     *
+     * dp[j] = dp[j - i*i] + 1
+     *
+     *
+     *
+     */
+    const dp = Array(n + 1).fill(Infinity)
+
+    dp[0] = 0
+    for (let i = 1; i <= n; i++) {
+        for (let j = 1; j * j <= i; j++) {
+            /**
+             *  i = 1; j=1:  dp[1] = dp[0]+1 = 1
+             *  i = 2:
+             *  j = 1 dp[2] = Math.min(dp[2], dp[1] + 1) = 2
+             *  j = 2  j*j > i; 跳过
+             *
+             *  i = 3:
+             *  j = 1: dp[3] = Math.min(dp[3], dp[2] + 1) = 3
+             *  j = 2: j*j > i; 跳过
+             *
+             *
+             */
+            dp[i] = Math.min(dp[i], dp[i - j * j] + 1)
+        }
+    }
+
+    return dp[n]
+}
+
+/**
+ * 139. 单词拆分
+ * 给你一个字符串 s 和一个字符串列表 wordDict 作为字典
+ * 如果可以利用字典中出现的一个或多个单词拼接出 s 则返回 true。
+ * 注意：不要求字典中出现的单词全部都使用，并且字典中的单词可以重复使用。
+ *
+ * 输入: s = "leetcode", wordDict = ["leet", "code"] 输出: true
+ * 解释: 返回 true 因为 "leetcode" 可以由 "leet" 和 "code" 拼接成。
+ *
+ * 输入: s = "applepenapple", wordDict = ["apple", "pen"] 输出: true
+ * 解释: 返回 true 因为 "applepenapple" 可以由 "apple" "pen" "apple" 拼接成。 注意，你可以重复使用字典中的单词。
+ *
+ * 输入: s = "catsandog", wordDict = ["cats", "dog", "sand", "and", "cat"] 输出: false
+ *
+ * @param {string} s
+ * @param {string[]} wordDict
+ * @return {boolean}
+ */
+var wordBreak = function (s, wordDict) {
+    /**
+     * 判断是否可以利用字典中出现的一个或者多个单词拼接出s,可以的话，返回true
+     * s = "leetcode"  wordDict = ["leet", "code"]
+     *
+     * 穷举所有的排列组合，看能否匹配到字符串 s
+     *
+     * leetcode: len = 8
+     *
+     * wordDict: leet: 4   code: 4
+     *
+     *        leet               code
+     *    leet   code      leet       code
+     * leet code       let code    leet  code
+     *
+     *
+     * 完全背包+字符串匹配
+     * 对于s: leetcode
+     * 遍历整个s，获取遍历长度：[1, s.length]
+     * 在字符串长度 [1...i]上，遍历过程中，看是否能找到匹配字典内的值的元素，如果找到，那么dp[i] = true
+     * 设置一个滑动窗口[i...j],
+     *
+     * dp[i]: 在长度(0,i]上，是否能找到在字典中的单词ƒ
+     *
+     */
+    const n = s.length
+
+    const wordSet = new Set()
+    for (let word of wordDict) {
+        wordSet.add(word)
+    }
+
+    const dp = Array(n + 1).fill(false)
+    dp[0] = true
+
+    for (let i = 1; i <= n; i++) {
+        for (let j = 0; j < i; j++) {
+            const subWord = s.substring(j, i)
+            if (wordSet.has(subWord) && dp[j] === true) {
+                dp[i] = true
+            }
+        }
+    }
+    return dp[n]
+}
+
+/**
+ * 打家劫舍
+ * @param {number[]} nums
+ * @return {number}
+ */
+var rob = function (nums) {
+    // 要求最大金额： dp[i] = 偷到的前i个房间时，所能获得的最大金额为 dp[i]
+    const n = nums.length
+
+    const dp = Array(n + 1).fill(0)
+
+    dp[0] = 0
+    dp[1] = nums[0]
+
+    for (let i = 2; i <= n; i++) {
+        dp[i] = Math.max(dp[i - 2] + nums[i - 1], dp[i - 1])
+    }
+
+    return dp[n]
+}
+
+/**
+ * 213. 打家劫舍 II
+ * 这个地方所有的房屋都 围成一圈 ，这意味着第一个房屋和最后一个房屋是紧挨着的。同时，相邻的房屋装有相互连通的防盗系统，
+ * 如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警 。
+ *
+ * 输入：nums = [1,2,3,1] 输出：4
+ * 解释：你可以先偷窃 1 号房屋（金额 = 1），然后偷窃 3 号房屋（金额 = 3）。 偷窃到的最高金额 = 1 + 3 = 4 。
+ *
+ * 子问题分割，对于房屋排列：[1,2,3,1]
+ * 取[1,2,3]和 [2，3，1] 中更大的数即可
+ *
+ * @param {number[]} nums
+ * @return {number}
+ */
+var rob = function (nums) {
+    const n = nums.length
+    if (n == 1) return nums[0]
+
+    const nums1 = nums.slice(0, n - 1)
+    const nums2 = nums.slice(1, n)
+
+    function getMax(list) {
+        const n = list.length
+        const dp = Array(n + 1).fill(0)
+        dp[0] = 0
+        dp[1] = list[0]
+        for (let i = 2; i < n; i++) {
+            dp[i] = Math.max(dp[i - 2] + list[i - 1], dp[i - 1])
+        }
+        return dp[n]
+    }
+
+    const profit1 = getMax(nums1)
+    const profit2 = getMax(nums2)
+    return Math.max(profit1, profit2)
+}
+
+/**
+ * 337. 打家劫舍 III
+ * 如果 两个直接相连的房子在同一天晚上被打劫 ，房屋将自动报警
+ * 给定二叉树的 root 。返回 在不触动警报的情况下 ，小偷能够盗取的最高金额 。
+ *
+ * @param {TreeNode} root
+ * @return {number}
+ */
+var rob = function (root) {
+    /**
+     * 不能打劫两个直接相连的房子，也就是对于一个节点来说，要么跳过当前节点，偷取左右子树节点；要么跳过左右子树节点，偷取两边子子树
+     *
+     * 对于金额来说，最高金额有以下情况：
+     * 1. 偷取root节点
+     * root.val +  root.left.left && root.left.left.val + root.left.right
+     * 2. 不偷root节点
+     * root.left + root.right
+     */
+
+    const memo = new Map()
+
+    function countProfit(root) {
+        if (root === null) return 0
+
+        if (root.left == null && root.right === null) return root.val
+
+        if (memo.has(root)) {
+            return memo.get(root)
+        }
+
+        let useRoot = root.val
+        if (root.left) {
+            useRoot += countProfit(root.left.left) + countProfit(root.left.right)
+        }
+        if (root.right) {
+            useRoot += countProfit(root.right.left) + countProfit(root.right.right)
+        }
+
+        const skipRoot = countProfit(root.left) + countProfit(root.right)
+
+        const maxProfit = Math.max(useRoot, skipRoot)
+
+        memo.set(root, maxProfit)
+
+        return maxProfit
+    }
+    return countProfit(root)
+}
+
+/**
+ * 121. 买卖股票的最佳时机
+ * 给定一个数组 prices ，它的第 i 个元素 prices[i] 表示一支给定股票第 i 天的价格
+ * 你只能选择 某一天 买入这只股票，并选择在 未来的某一个不同的日子 卖出该股票。设计一个算法来计算你所能获取的最大利润
+ * @param {number[]} prices
+ * @return {number}
+ */
+var maxProfit = function (prices) {
+    /**
+     *
+     * 输入：[7,1,5,3,6,4] 输出：5
+     * 解释：在第 2 天（股票价格 = 1）的时候买入，在第 5 天（股票价格 = 6）的时候卖出，最大利润 = 6-1 = 5 。
+     * 注意利润不能是 7-1 = 6, 因为卖出价格需要大于买入价格；同时，你不能在买入前卖出股票。
+     *
+     * 买入和卖出只有一次操作，并且要先买入，才能卖出
+     *
+     * 寻找递增区间
+     *
+     * 1.dp数组及其下标的含义
+     *
+     */
+    // 1. 贪心算法，对于股票区间[i...j],用左侧最小的与右侧最大的相减，得到的就是最大利润
+    // const n = prices.length
+    // let low = prices[0]
+    // let profit = 0
+    // for (let i = 1; i < n; i++) {
+    //     low = Math.min(low, prices[i])
+    //     profit = Math.max(profit, prices[i] - low)
+    // }
+    // return profit
+    /**
+     * 2. 动态规划
+     * 对于一只股票，存在两种状态，一个是卖出，一个是持有
+     * dp[i][0] 卖出股票的利润
+     * dp[i][1] 持有股票的成本
+     *
+     * dp[0][0] = 0
+     * dp[0][1] = prices[0]
+     *
+     * dp[i][0] = Math.max(prices[i] - dp[i-1][1], dp[i-1][0])
+     * dp[i][1] = Math.min(prices[i-1][1], prices[i])
+     */
+    const n = prices.length
+    const dp = Array.from(Array(n), () => [])
+
+    dp[0][0] = 0
+    dp[0][1] = prices[0]
+
+    for (let i = 1; i < n; i++) {
+        dp[i][0] = Math.max(prices[i] - dp[i - 1][1], dp[i - 1][0])
+        dp[i][1] = Math.min(dp[i - 1][1], prices[i])
+    }
+
+    return dp[n - 1][0]
+}
+
+/**
+ * 714. 买卖股票的最佳时机含手续费
+ * 给定一个整数数组 prices，其中 prices[i]表示第 i 天的股票价格 ；整数 fee 代表了交易股票的手续费用。
+ * 你可以无限次地完成交易，但是你每笔交易都需要付手续费。如果你已经购买了一个股票，在卖出它之前你就不能再继续购买股票了
+ * 返回获得利润的最大值。
+ * 注意：这里的一笔交易指买入持有并卖出股票的整个过程，每笔交易你只需要为支付一次手续费。
+ *
+ * 输入：prices = [1, 3, 2, 8, 4, 9], fee = 2 输出：8
+ * 解释：能够达到的最大利润:
+ * 在此处买入 prices[0] = 1
+ * 在此处卖出 prices[3] = 8
+ * 在此处买入 prices[4] = 4
+ * 在此处卖出 prices[5] = 9
+ * 总利润: ((8 - 1) - 2) + ((9 - 4) - 2) = 8
+ * @param {number[]} prices
+ * @param {number} fee
+ * @return {number}
+ */
+var maxProfit = function (prices, fee) {
+    /**
+     * 每次交易要去掉2元利润，按卖出动作算； 允许多次交易
+     *
+     * 1. 确定Dp数组
+     * dp[i][0]: 当前所得的利润, 清仓，没有股票的状态
+     * dp[i][1]: 当前持有的股票成本，持股，买一手的状态
+     */
+
+    const n = prices.length
+
+    const dp = Array.from(Array(n + 1), () => [])
+
+    dp[0][0] = 0
+    dp[0][1] = -prices[0]
+
+    for (let i = 1; i < n; i++) {
+        // dp[i][0]: 当前i不持有，接着i-1的空仓； dp[i][1]: 卖掉股票后的收益，去掉手续费 --- dp[i][0]：第 i 天结束时不持股的最大利润
+        dp[i][0] = Math.max(dp[i - 1][0], dp[i - 1][1] + prices[i] - fee)
+
+        // dp[i][1]: 持有当前股票, 用 dp[i-1][0]去入手   --- dp[i][1]：第 i 天结束时持股的最大利润
+        dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][0] - prices[i])
+    }
+    return dp[n-1][0]
 }
