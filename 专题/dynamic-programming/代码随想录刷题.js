@@ -2057,27 +2057,93 @@ var maxSubArray = function (nums) {
      *
      *
      *     -2    1    -3   4   -1   2   -5   4
-     * -2  -2    
+     * -2  -2
      * 1         1
      * -3            -3
-     * 
-     * 
+     *
+     *
      * dp[0][0] = 0
-     * 
-     * dp[1][1] = 
-     * 
+     *
+     * dp[1][1] =
+     *
      * 要求的是连续部分，感觉是需要维护一个区间来比较最大值
-     * 
-     * dp[i][j] = 
-     * 
+     *
      */
 
     const n = nums.length
     const dp = Array(n).fill(-Infinity)
 
     dp[0] = nums[0]
+    let res = nums[0]
 
     for (let i = 1; i < n; i++) {
-
+        dp[i] = Math.max(dp[i - 1] + nums[i], nums[i])
+        res = Math.max(dp[i], res)
     }
+
+    return res
 }
+
+/**
+ * 392. 判断子序列
+ * 给定字符串 s 和 t ，判断 s 是否为 t 的子序列
+
+ * @param {string} s
+ * @param {string} t
+ * @return {boolean}
+ */
+var isSubsequence = function (s, t) {
+    /**
+     * 1. 双指针实现
+     */
+    const sLen = s.length
+    const tLen = t.length
+    let left = 0,
+        right = 0
+    while (left < sLen && right < tLen) {
+        if (s[left] === t[right]) {
+            left++
+        }
+        right++
+    }
+    return left === sLen
+
+    /**
+     * 2. 动态规划
+     *
+     * 输入：s = "abc", t = "ahbgdc" 输出：true
+     *    a  h  b  g  d  c
+     * a  1  1  1  1  1  1
+     * b  1  1  2  2  2  2
+     * c
+     *
+     */
+    const n1 = s.length
+    const n2 = t.length
+    const dp = Array.from(Array(n1 + 1), () => Array(n2 + 1).fill(0))
+    dp[0][0] = 0
+    for (let i = 1; i <= n1; i++) {
+        for (let j = 1; j <= n2; j++) {
+            if (s[i - 1] === t[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+            }
+        }
+    }
+    return dp[n1][n2] === n1
+}
+
+/**
+ * 115.不同的子序列
+ * 给你两个字符串 s 和 t ，统计并返回在 s 的 子序列 中 t 出现的个数
+ *
+ * 输入：s = "rabbbit", t = "rabbit" 输出：3
+ * 解释： 如下所示, 有 3 种可以从 s 中得到 "rabbit" 的方案。
+ * rabbbit rabbbit rabbbit
+ * 
+ * @param {string} s
+ * @param {string} t
+ * @return {number}
+ */
+var numDistinct = function (s, t) {}
