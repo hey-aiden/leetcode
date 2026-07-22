@@ -1489,18 +1489,15 @@ var maxProfit = function (prices) {
      * dp[i][0] = Math.max(prices[i] - dp[i-1][1], dp[i-1][0])
      * dp[i][1] = Math.min(prices[i-1][1], prices[i])
      */
-    const n = prices.length
-    const dp = Array.from(Array(n), () => [])
-
-    dp[0][0] = 0
-    dp[0][1] = prices[0]
-
-    for (let i = 1; i < n; i++) {
-        dp[i][0] = Math.max(prices[i] - dp[i - 1][1], dp[i - 1][0])
-        dp[i][1] = Math.min(dp[i - 1][1], prices[i])
-    }
-
-    return dp[n - 1][0]
+    // const n = prices.length
+    // const dp = Array.from(Array(n), () => [])
+    // dp[0][0] = 0
+    // dp[0][1] = prices[0]
+    // for (let i = 1; i < n; i++) {
+    //     dp[i][0] = Math.max(prices[i] - dp[i - 1][1], dp[i - 1][0])
+    //     dp[i][1] = Math.min(dp[i - 1][1], prices[i])
+    // }
+    // return dp[n - 1][0]
 }
 
 /**
@@ -1544,5 +1541,543 @@ var maxProfit = function (prices, fee) {
         // dp[i][1]: 持有当前股票, 用 dp[i-1][0]去入手   --- dp[i][1]：第 i 天结束时持股的最大利润
         dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][0] - prices[i])
     }
-    return dp[n-1][0]
+    return dp[n - 1][0]
+}
+
+/**
+ * 买卖股票的最佳时机II
+ * 给你一个整数数组 prices ，其中 prices[i] 表示某支股票第 i 天的价格
+ * 在每一天，你可以决定是否购买和/或出售股票。你在任何时候 最多 只能持有 一股 股票。然而，你可以在 同一天 多次买卖该股票，但要确保你持有的股票不超过一股。
+ * 输入：prices = [7,1,5,3,6,4] 输出：7
+ * 解释：
+ * 在第 2 天（股票价格 = 1）的时候买入，
+ * 在第 3 天（股票价格 = 5）的时候卖出, 这笔交易所能获得利润 = 5 - 1 = 4。
+ * 随后，在第 4 天（股票价格 = 3）的时候买入，
+ * 在第 5 天（股票价格 = 6）的时候卖出, 这笔交易所能获得利润 = 6 - 3 = 3。
+ * 最大总利润为 4 + 3 = 7 。
+ *
+ * @param {number[]} prices
+ * @return {number}
+ */
+var maxProfit = function (prices) {
+    /**
+     *
+     * 最多 只能持有 一股 股票
+     *
+     * dp[i][0] 表示获取的利润
+     * dp[i][1] 表示持有的股票
+     */
+    // const n = prices.length
+
+    // const dp = Array.from(Array(n), () => [])
+
+    // dp[0][0] = 0
+    // dp[0][1] = -prices[0]
+    // for (let i = 1; i < n; i++) {
+    //     dp[i][0] = Math.max(dp[i - 1][1] + prices[i], dp[i - 1][0])
+    //     dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][0] - prices[i])
+    // }
+    // return dp[n - 1][0]
+
+    /**
+     * 递归实现
+     *
+     * @param {number} day  对应的第i天
+     * @param {number: 0 | 1} hold 股票的状态，手里无股票 | 手里有股票
+     *
+     * 第0天，是没有股票的，所有当day递归到0时，返回0
+     * 第0天，如果要持有的话，那么返回prices[day],即这一天的股票金额
+     *
+     */
+    const n = prices.length
+
+    function dfs(day, hold) {
+        if (day == 0) {
+            if (hold === 0) return 0
+            if (hold === 1) return -prices[day]
+        }
+        if (hold === 0) {
+            // 没有持有股票 - 清仓
+            return Math.max(dfs(day - 1, 0), dfs(day - 1, 1) + prices[day])
+        }
+        // 买入股票
+        return Math.max(dfs(day - 1, 1), dfs(day - 1, 0) - prices[day])
+    }
+
+    dfs(n - 1, 0)
+}
+
+/**
+ * 123. 买卖股票的最佳时机 III
+ * 给定一个数组，它的第 i 个元素是一支给定的股票在第 i 天的价格
+ * 设计一个算法来计算你所能获取的最大利润。你最多可以完成 两笔 交易。
+ * 注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）
+ *
+ * 输入：prices = [3,3,5,0,0,3,1,4] 输出：6
+ * 解释：
+ * 在第 4 天（股票价格 = 0）的时候买入，在第 6 天（股票价格 = 3）的时候卖出，这笔交易所能获得利润 = 3-0 = 3 。
+ * 随后，在第 7 天（股票价格 = 1）的时候买入，在第 8 天 （股票价格 = 4）的时候卖出，这笔交易所能获得利润 = 4-1 = 3 。
+ *
+ * @param {number[]} prices
+ * @return {number}
+ */
+var maxProfit = function (prices) {
+    /**
+     * 限制了 支持 2笔交易，所以要维护两个状态
+     * dp[i][1]: 第一次清仓的收益 - 没有股票
+     * dp[i][2]: 第一次买入
+     * dp[i][3]: 第二次清仓  -  没有股票
+     * dp[i][4]: 第二次买入
+     */
+    // const n = prices.length
+    // const dp = Array.from(Array(n), () => [])
+    // dp[0][1] = 0
+    // dp[0][2] = -prices[0]
+    // dp[0][3] = 0
+    // dp[0][4] = -prices[0]
+    // for (let i = 1; i < n; i++) {
+    //     dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][2] + prices[i])
+    //     dp[i][2] = Math.max(dp[i - 1][2], -prices[i])  // 第一次买入调整
+    //     dp[i][3] = Math.max(dp[i - 1][3], dp[i - 1][4] + prices[i])
+    //     dp[i][4] = Math.max(dp[i - 1][4], dp[i - 1][1] - prices[i]) // 第二次买入，可以是上一次买入，也可以是第一次清仓之后的状态买入
+    // }
+    // // return Math.max(dp[n - 1][1], dp[n - 1][3])
+    // return dp[n - 1][3] // 第二次卖出，已经包含第一次买入的收益
+
+    /**
+     * 调整dp数组的定义
+     * dp[i][1]: 买入股票 -- 持有股票
+     * dp[i][2]: 卖出收益 -- 没有股票
+     * dp[i][3]: 第二次买入股票 -- 持有
+     * dp[i][4]: 第二次卖出收益
+     */
+    const n = prices.length
+    const dp = Array.from(Array(n), () => [])
+    dp[0][1] = -prices[0]
+    dp[0][2] = 0
+    dp[0][3] = -prices[0]
+    dp[0][4] = 0
+
+    for (let i = 1; i < n; i++) {
+        dp[i][1] = Math.max(dp[i - 1][1], -prices[i])
+        dp[i][2] = Math.max(dp[i - 1][2], dp[i - 1][1] + prices[i])
+        dp[i][3] = Math.max(dp[i - 1][3], dp[i - 1][2] - prices[i])
+        dp[i][4] = Math.max(dp[i - 1][4], dp[i - 1][3] + prices[i])
+    }
+    return dp[n - 1][4]
+}
+
+/**
+ * 188. 买卖股票的最佳时机 IV
+ *
+ * 给你一个整数数组 prices 和一个整数 k ，其中 prices[i] 是某支给定的股票在第 i 天的价格
+ * 设计一个算法来计算你所能获取的最大利润。你最多可以完成 k 笔交易。也就是说，你最多可以买 k 次，卖 k 次。
+ *
+ * 注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+ *
+ * 输入：k = 2, prices = [3,2,6,5,0,3] 输出：7
+ * 解释：
+ * 在第 2 天 (股票价格 = 2) 的时候买入，在第 3 天 (股票价格 = 6) 的时候卖出, 这笔交易所能获得利润 = 6-2 = 4 。
+ * 随后，在第 5 天 (股票价格 = 0) 的时候买入，在第 6 天 (股票价格 = 3) 的时候卖出, 这笔交易所能获得利润 = 3-0 = 3 。
+ *
+ * @param {number} k
+ * @param {number[]} prices
+ * @return {number}
+ */
+var maxProfit = function (k, prices) {
+    /**
+     * 参考 买卖股票的最佳时机 III； 对应的是k=2的场景
+     * 那么对于变量k，需要定义的数组是 dp[i][2k], 因为每种买进卖出都有两种状态
+     */
+    const n = prices.length
+
+    const dp = Array.from(Array(n), () => Array(2 * k + 1).fill(0))
+
+    // 1. 完成初始化: dp[i][1] 持有  dp[i][2] 卖出
+    for (let i = 1; i <= 2 * k; i += 2) {
+        dp[0][i] = -prices[0]
+    }
+    dp[0][0] = 0
+
+    // 1. 遍历prices
+    for (let i = 1; i < n; i++) {
+        for (let j = 1; j <= 2 * k - 1; j += 2) {
+            dp[i][j] = Math.max(dp[i - 1][j], dp[i - 1][j - 1] - prices[i])
+            dp[i][j + 1] = Math.max(dp[i - 1][j + 1], dp[i - 1][j] + prices[i])
+        }
+    }
+
+    console.log(dp)
+
+    return dp[n - 1][2 * k]
+}
+
+/**
+ * 309. 买卖股票的最佳时机含冷冻期
+ * 给定一个整数数组prices，其中第  prices[i] 表示第 i 天的股票价格
+ * 设计一个算法计算出最大利润。
+ * 在满足以下约束条件下，你可以尽可能地完成更多的交易（多次买卖一支股票）:
+ * 卖出股票后，你无法在第二天买入股票 (即冷冻期为 1 天)。
+ *
+ * 注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+ *
+ * 输入: prices = [1,2,3,0,2] 输出: 3
+ * 解释: 对应的交易状态为: [买入, 卖出, 冷冻期, 买入, 卖出]
+ *
+ * dp[i][0] 持有的股票 - 持有股票
+ * dp[i][1] 当前的利润 - 不持有股票
+ * dp[i][2] 股票已卖出
+ * dp[i][3] 前一个冻结期的收益
+ *
+ * if(dp[i-1] == "卖出") break 没法持有；所有如果dp[i][1]选择卖出,做一个标识
+ *
+ * @param {number[]} prices
+ * @return {number}
+ */
+var maxProfit = function (prices) {
+    /**
+     * 存在四种状态
+     * 1. 持有股票的状态：
+     *    之前就持有股票：dp[i][0] = dp[i-1][0]
+     *    前一个是冻结日：dp[i][0] = dp[i-1][3] - prices[i]
+     *    前一天未持有股票：dp[i][0] = dp[i-1][1] - prices[i]
+     * 2. 不持有股票的状态：
+     *    前一天持有股票：dp[i][1] = dp[i-1][0] + prices[i]
+     *    期间未操作：dp[i][1] = dp[i-1][1]
+     * 3. 股票已经卖出的状态： dp[i][2] = dp[i-1][0] + prices[i]  // 从前一天的持股+今日的股价，说明今天已经卖出了
+     * 3. 冻结日： dp[i][3] = dp[i-1][2]  // 卖出之后，就是冻结日，dp[i][3] = dp[i-1][2]
+     *
+     * 拆解状态：
+     * dp[i][0]: 持股： 原有持股、在卖出股票的状态下购入，在前一个冻结日过后购入
+     * dp[i][1]: 保持卖出股票的状态：之前卖出股票的状态，以及冻结日
+     * dp[i][2]: 卖出股票
+     * dp[i][3]: 冻结日
+     *
+     * 初始化：
+     * dp[0][0] = -prices[0]
+     * dp[0][1] = 0
+     * dp[0][2] = 0
+     * dp[0][3] = 0
+     */
+
+    const n = prices.length
+    const dp = Array.from(Array(n), () => [])
+
+    dp[0][0] = -prices[0]
+    dp[0][1] = 0
+    dp[0][2] = 0
+    dp[0][3] = 0
+    for (let i = 1; i < n; i++) {
+        dp[i][0] = Math.max(dp[i - 1][0], dp[i - 1][1] - prices[i], dp[i - 1][3] - prices[i])
+        dp[i][1] = Math.max(dp[i - 1][1], dp[i - 1][3])
+        dp[i][2] = dp[i - 1][0] + prices[i]
+        dp[i][3] = dp[i - 1][2]
+    }
+    return Math.max(dp[n - 1][1], dp[n - 1][2], dp[n - 1][3])
+}
+
+/**
+ * 300. 最长递增子序列: 只能找到每个区间段的最长递增子序列，然后再比较
+ * 给你一个整数数组 nums ，找到其中最长严格递增子序列的长度
+ * 子序列 是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。
+ * 例如，[3,6,2,7] 是数组 [0,3,1,6,2,2,7] 的子序列。
+ *
+ * 输入：nums = [10,9,2,5,3,7,101,18] 输出：4
+ * 解释：最长递增子序列是 [2,3,7,101]，因此长度为 4
+ *
+ * @param {number[]} nums
+ * @return {number}
+ *
+ */
+var lengthOfLIS = function (nums) {
+    /**
+     * 对于某个数 nums[i],在下标i出，最长的递增子序列为：
+     * 如果 nums[i] > nums[i-1] : 那么dp[i]的长度 = dp[i-1] + 1
+     * 如果 nums[i] < nums[i-1] : 那么dp[i]的长度 = dp[i-1]
+     *
+     * dp[i]：对于序列[0, ..., i], 最长的递增子序列是 dp[i]
+     *
+     * if nums[i] > nums[i-1]:  dp[i] = dp[i-1] + 1
+     * else                     dp[i] = dp[i-1]
+     * dp[i] = Math.math(dp[i], )
+     *
+     * 初始值：单个子项构成的序列长度是1，所以初始化 dp[i] = 1
+     *
+     * 输入：nums = [10,9,2,5,3,7,101,18] 输出：4
+     *
+     *     10  9  2  5  3  7  101  18
+     * 10  1   1  1  1  1  1   2    1
+     * 9       1  1  1  1  1   2    0
+     * 2
+     * 5
+     *
+     *
+     * 10
+     * 10 9
+     * 10 9 2
+     * 10 9 2 5
+     * 10 9 2 5
+     *
+     * dp[i][j] = x : 对于区间[i,j]下的最长递增序列长度是 x
+     */
+
+    const n = nums.length
+    const dp = Array(n).fill(1)
+
+    for (let i = 1; i < n; i++) {
+        for (let j = 0; j < i; j++) {
+            if (nums[i] > nums[j]) {
+                dp[i] = Math.max(dp[i], dp[j] + 1)
+            }
+        }
+        // 可以定义一个result变量，在遍历更新每个dp[i]的时候去比较，这样就少一次最终比较了
+    }
+    return Math.max(...dp)
+}
+
+/**
+ * 674. 最长连续递增序列
+ * 给定一个未经排序的整数数组，找到最长且 连续递增的子序列，并返回该序列的长度
+ *
+ * 连续递增的子序列 可以由两个下标 l 和 r（l < r）确定，
+ * 如果对于每个 l <= i < r，都有 nums[i] < nums[i + 1] ，
+ * 那么子序列 [nums[l], nums[l + 1], ..., nums[r - 1], nums[r]] 就是连续递增子序列
+ *
+ * 输入：nums = [1,3,5,4,7] 输出：3
+ * 解释：最长连续递增序列是 [1,3,5], 长度为3。 尽管 [1,3,5,7] 也是升序的子序列, 但它不是连续的，因为 5 和 7 在原数组里被 4 隔开。
+ *
+ * @param {number[]} nums
+ * @return {number}
+ */
+var findLengthOfLCIS = function (nums) {
+    const n = nums.length
+
+    const dp = Array(n).fill(1)
+
+    for (let i = 0; i < n; i++) {
+        if (nums[i] > nums[i - 1]) {
+            dp[i] = dp[i - 1] + 1
+        }
+    }
+    return Math.max(...dp)
+}
+
+/**
+ * 718. 最长重复子数组
+ * 给两个整数数组 nums1 和 nums2 ，返回 两个数组中 公共的 、长度最长的子数组的长度 。
+ *
+ * 输入：nums1 = [1,2,3,2,1], nums2 = [3,2,1,4,7] 输出：3
+ * 解释：长度最长的公共子数组是 [3,2,1] 。
+ *
+ * @param {number[]} nums1
+ * @param {number[]} nums2
+ * @return {number}
+ */
+var findLength = function (nums1, nums2) {
+    /**
+     *
+     * 求最长子数组的长度
+     *
+     * nums1 = [1,2,3,2,1], nums2 = [3,2,1,4,7] 输出：3
+     *
+     *
+     * dp[i][j] 表示 nums1和nums2在
+     *
+     * dp[i][j]: nums[i] === nums2[j]
+     *
+     *           dp[i-1][j] + dp[i][j-1]
+     *
+     * dp[i][j]表示在下标i中，存在的相同元素的最长子数组长度
+     *
+     *     3   2    1    4    7
+     * 1   0   0    1    0    0
+     * 2   0   1    0    0    0
+     * 3   1   0    0    0    0
+     * 2   0   1
+     * 1   0
+     *
+     *    1              2              3
+     * 3 2 1 4 7     3 2 1 4 7      3 2 1 4 7
+     *
+     *
+     */
+    const n1 = nums1.length
+    const n2 = nums2.length
+
+    let res = 0
+
+    const dp = Array.from(Array(n1 + 1), () => Array(n2 + 1).fill(0))
+
+    for (let i = 1; i <= n1; i++) {
+        for (let j = 1; j <= n2; j++) {
+            if (nums1[i - 1] === nums2[j - 1]) {
+                dp[i][j] = Math.max(dp[i][j], dp[i - 1][j - 1] + 1)
+            }
+            if (dp[i][j] > res) res = dp[i][j]
+        }
+    }
+
+    return res
+}
+
+/**
+ * 最长公共子序列
+ * 给定两个字符串 text1 和 text2，返回这两个字符串的最长 公共子序列 的长度。如果不存在 公共子序列 ，返回 0
+ *
+ * 输入：text1 = "abcde", text2 = "ace" 输出：3
+ * 解释：最长公共子序列是 "ace" ，它的长度为 3
+ *
+ * 一个字符串的 子序列 是指这样一个新的字符串：它是由原字符串在不改变字符的相对顺序的情况下删除某些字符（也可以不删除任何字符）后组成的新字符串
+ *
+ * @param {string} text1
+ * @param {string} text2
+ * @return {number}
+ */
+var longestCommonSubsequence = function (text1, text2) {
+    /**
+     * text1 = "abcde", text2 = "ace"
+     *
+     *    a   c   e
+     * a  1   1   1
+     * b  1   1   1
+     * c  1   2   1
+     * d  1   2   1
+     * e  1   2   3
+     *
+     * dp[i][j] 在text1-(0...i) 和 text2-(0...j)中的最长公共子序列的长度为 dp[i][j]
+     *
+     *
+     * dp[i][j]的依赖关系：
+     * 1. dp[i][j-1], 依赖前一列匹配到的
+     * 2. dp[i-1][j]，依赖上一行匹配到的
+     * 3. dp[i][j] = Math.max(dp[i][j-1], dp[i-1][j])
+     * 4. if text[i] === text[j]: dp[i][j] = Math.max(dp[i][j-1], dp[i-1][j]) + 1
+     *
+     */
+    const n1 = text1.length
+    const n2 = text2.length
+
+    const dp = Array.from(Array(n1 + 1), () => Array(n2 + 1).fill(0))
+
+    for (let i = 1; i <= n1; i++) {
+        for (let j = 1; j <= n2; j++) {
+            // 如果两个字符串相等，那么这两个字符串在排列中都需要被用掉，所以直接用dp[i-1][j-1] + 1
+            if (text1[i - 1] === text2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+            }
+        }
+    }
+
+    return dp[n1][n2]
+}
+
+/**
+ * 1035. 不相交的线
+ * 在两条独立的水平线上按给定的顺序写下 nums1 和 nums2 中的整数。
+ * 现在，可以绘制一些连接两个数字 nums1[i] 和 nums2[j] 的直线，这些直线需要同时满足：
+ * 1. nums1[i] == nums2[j]
+ * 2. 且绘制的直线不与任何其他连线（非水平线）相交。
+ * 请注意，连线即使在端点也不能相交：每个数字只能属于一条连线。
+ *
+ * nums1:  1    4     2
+ *
+ * nums2:  1    2     4
+ *
+ * 输入：nums1 = [1,4,2], nums2 = [1,2,4] 输出：2
+ * 解释：可以画出两条不交叉的线，如上图所示。 但无法画出第三条不相交的直线，
+ * 因为从 nums1[1]=4 到 nums2[2]=4 的直线将与从 nums1[2]=2 到 nums2[1]=2 的直线相交。
+ *
+ * 找最长的公共子序列
+ *
+ * @param {number[]} nums1
+ * @param {number[]} nums2
+ * @return {number}
+ */
+var maxUncrossedLines = function (nums1, nums2) {
+    /**
+     * 输入：nums1 = [2,5,1,2,5], nums2 = [10,5,2,1,5,2] 输出：3
+     *
+     *     10   5   2   1    5    2
+     * 2   0    0   1   0    0    1
+     * 5   0    1   1   1    1    1
+     * 1   0    1   1   2    2    2
+     * 2   0    1   2   2    2    3
+     * 5
+     *
+     */
+
+    const n1 = nums1.length
+    const n2 = nums2.length
+
+    const dp = Array.from(Array(n1 + 1), () => Array(n2 + 1).fill(0))
+
+    for (let i = 1; i <= n1; i++) {
+        for (let j = 1; j <= n2; j++) {
+            if (nums1[i - 1] === nums2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            } else {
+                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+            }
+        }
+    }
+
+    return dp[n1][n2]
+}
+
+/**
+ * 53. 最大子数组和
+ * 给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+ * 子数组是数组中的一个连续部分。
+ *
+ * 输入：nums = [-2,1,-3,4,-1,2,1,-5,4] 输出：6
+ * 解释：连续子数组 [4,-1,2,1] 的和最大，为 6 。
+ *
+ * @param {number[]} nums
+ * @return {number}
+ */
+var maxSubArray = function (nums) {
+    /**
+     * 找出最大子数组和，子数组要是连续的
+     *
+     *
+     * [0...i]区间最大子数组和 dp[i]max = dp[i], dp[i-1] + dp[i]
+     *
+     * dp[i][j] 表示区间在[i...j] 的最大子数组和
+     *
+     * 子数组是一个连续的地方
+     *
+     * dp[i] = ( dp[i-1], nums[i] )
+     *
+     * dp[0] = dp[i-1], nums[i]
+     *
+     * dp[0][0] = 0
+     * dp[0][1] = nums[0]
+     *
+     *
+     *     -2    1    -3   4   -1   2   -5   4
+     * -2  -2    
+     * 1         1
+     * -3            -3
+     * 
+     * 
+     * dp[0][0] = 0
+     * 
+     * dp[1][1] = 
+     * 
+     * 要求的是连续部分，感觉是需要维护一个区间来比较最大值
+     * 
+     * dp[i][j] = 
+     * 
+     */
+
+    const n = nums.length
+    const dp = Array(n).fill(-Infinity)
+
+    dp[0] = nums[0]
+
+    for (let i = 1; i < n; i++) {
+
+    }
 }
