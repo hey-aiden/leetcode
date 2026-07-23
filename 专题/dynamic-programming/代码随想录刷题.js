@@ -2138,12 +2138,388 @@ var isSubsequence = function (s, t) {
  * 115.不同的子序列
  * 给你两个字符串 s 和 t ，统计并返回在 s 的 子序列 中 t 出现的个数
  *
+ * 找到 s 的所有子序列，满足子序列为 t 字符串的个数
+ *
+ * 背包问题？ 从 s 的物品里面，按顺序拿出，组成字符串 t 的序列个数
+ *
  * 输入：s = "rabbbit", t = "rabbit" 输出：3
  * 解释： 如下所示, 有 3 种可以从 s 中得到 "rabbit" 的方案。
  * rabbbit rabbbit rabbbit
- * 
+ *
+ *
+ * 因为是求序列，也就是排列，所以要先遍历背包，把背包的东西依次取出，再看能组成背包的组合数
+ *
+ *
+ * dp[i][j] : 在以 i-1 下标结尾的 s 中，包含以 j-1 下标结尾的t的个数
+ *
+ * 对于每一个物品s[i-1]存在以下情况：
+ * 如果 s[i-1] === t[i-1]: 当前字符串相匹配，那么此时的个数：
+ * dp[i][j] = dp[i-1][j-1]:也就是使用当前 i-1 和 j-1;  同时如果 删除 i-1，就是不使用当前字符串 s[i-1]的对于下标j的匹配个数： dp[i-1][j]
+ * 也就是对于字符串s来说，每次更新 i 的下标对应的匹配字符串t 的个数
+ *
+ * 具体推导的dp表如下：
+ *    ''    r   a   b   b   i   t
+ *     1    0   0   0   0   0   0
+ * r   1    1   0   0   0   0   0
+ * a   1    1   1   0   0   0   0
+ * b   1    1   1   1   0   0   0
+ * b   1    1   1   2   1   0   0
+ * b   1    1   1   3   3   0   0
+ * i   1    1   1   3   3   3   0
+ * t   1    1   1   3   3   3   3
+ *
+ * dp[i][j]: 在字符串s的区间(0,...i),和字符串t的区间(0...j)中，找到公共子串的个数；
+ * if s[i] === t[i]: dp[i][j] = dp[i-1][j-1]  序列是会把字符串消耗掉的
+ *
+ *
+ *
+ *
+ * 输入：s = "babgbag", t = "bag" 输出：5
+ *
  * @param {string} s
  * @param {string} t
  * @return {number}
  */
-var numDistinct = function (s, t) {}
+var numDistinct = function (s, t) {
+    /**
+     * 1. 要满足t是s的子序列
+     * 找出所有的子序列，然后跟s匹配
+     */
+    const sLen = s.length
+    const tLen = t.length
+
+    const dp = Array.from(Array(sLen + 1), () => Array(tLen + 1).fill(0))
+
+    for (let i = 0; i <= sLen; i++) {
+        // 对于空字符串，s的每个元素都是能支持匹配的，所以初始化 dp[i][0] = 1
+        dp[i][0] = 1
+    }
+
+    for (let i = 1; i <= sLen; i++) {
+        for (let j = 1; j <= tLen; j++) {
+            if (s[i - 1] === t[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j]
+            } else {
+                // 不使用 s[i-1]; 此时s[i-1]无法匹配 t[j-1]; 那么此时dp[i][j]依赖于上一次dp[i]遍历到j的时候的匹配数
+                dp[i][j] = dp[i - 1][j]
+            }
+        }
+    }
+    return dp[sLen][tLen]
+
+    /**
+     * 如果要修改dp[i][j]的定义呢，改为： [0,i], [0,j]区间呢
+     *
+     * 初始相对麻烦一点，要对与 [0,0] 做初始化处理
+     */
+    const sLen = s.length
+    const tLen = t.length
+    const dp = Array.from(Array(sLen), () => Array(tLen).fill(0))
+
+    dp[0][0] = s[0] === t[0] ? 1 : 0
+    for (let i = 1; i < sLen; i++) {
+        dp[i][0] = dp[i - 1][0]
+        if (s[i] === t[0]) {
+            dp[i][0]++
+        }
+    }
+
+    for (let i = 1; i < sLen; i++) {
+        for (let j = 1; j < tLen; j++) {
+            if (s[i] === t[j]) {
+                dp[i][j] = dp[i - 1][j - 1] + dp[i - 1][j]
+            } else {
+                dp[i][j] = dp[i - 1][j]
+            }
+        }
+    }
+    return dp[sLen - 1][tLen - 1]
+}
+
+/**
+ * 583. 两个字符串的删除操作
+ * 给定两个单词 word1 和 word2 ，返回使得 word1 和  word2 相同所需的最小步数
+ *
+ * 每步 可以删除任意一个字符串中的一个字符。
+ *
+ * 输入: word1 = "sea", word2 = "eat" 输出: 2
+ * 解释: 第一步将 "sea" 变为 "ea" ，第二步将 "eat "变为 "ea"
+ *
+ * 求得是使得 word1 === word2 的最小步数
+ *
+ *
+ * dp[i][j]: i...j的最长公共子序列
+ *
+ * 在遍历字符串的过程中，存在以下情况：
+ * 对于word1[i] === word2[j],操作个数取决于dp[i-1][j-1]; 因为可以跳过本地操作，不占用步数
+ *
+ * if word1[i] !== word2[j]：操作个数取决于 i-1匹配到的j + 1，因为要删除当前i; 或者 j-1匹配到的i，相当于删除当前j;
+ * dp[i][j] = Math.min(dp[i-1][j], dp[i][j-1]) + 1
+ *
+ * dp数组定义：dp[i][j]： 在下标 i-1 的word1, 要变成下标 j - 1的word2，所需的最小步数为 dp[i][j]
+ * dp初始化：
+ * dp[0][0] = 0
+ *
+ * 可以删除i，也可以删除j； 因为是删除操作，所以遇到不能的，只能两边都删除，没法替换。
+ *
+ *    ''   e   a   t
+ * ''  0   1   2   3
+ * s   1   2   3   4
+ * e   2   1   2   3
+ * a   3   2   1   2
+ *
+ * @param {string} word1
+ * @param {string} word2
+ * @return {number}
+ */
+var minDistance = function (word1, word2) {
+    const n1 = word1.length
+    const n2 = word2.length
+    const dp = Array.from(Array(n1 + 1), () => Array(n2 + 1).fill(0))
+
+    /**
+     * 初始化优化：
+     * 1. dp[i][0] 的初始化，可以在 第一层 i 的 for 循环中完成，减少遍历;
+     * 2. dp[0][j] 的初始化，可以在 第二层 j 的 for 循环中完成，减少遍历；
+     */
+    dp[0][0] = 0
+    for (let i = 1; i <= n1; i++) {
+        dp[i][0] = dp[i - 1][0] + 1
+    }
+    for (let j = 1; j <= n2; j++) {
+        dp[0][j] = dp[0][j - 1] + 1
+    }
+
+    for (let i = 1; i <= n1; i++) {
+        // dp[i][0] = i
+        for (let j = 1; j <= n2; j++) {
+            // dp[0][j] = dp[0][j - 1] + 1
+            if (word1[i - 1] === word2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1]
+            } else {
+                dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1]) + 1
+            }
+        }
+    }
+    return dp[n1][n2]
+}
+
+/**
+ * 72. 编辑距离
+ * 给你两个单词 word1 和 word2， 请返回将 word1 转换成 word2 所使用的最少操作数
+ * 你可以对一个单词进行如下三种操作：
+ * 插入一个字符
+ * 删除一个字符
+ * 替换一个字符
+ *
+ * 输入：word1 = "horse", word2 = "ros" 输出：3
+ * 解释： horse -> rorse (将 'h' 替换为 'r') rorse -> rose (删除 'r') rose -> ros (删除 'e')
+ *
+ *
+ *  对比删除操作，多了两个选择：插入、替换
+ *
+ * 对于相同字符串的操作，可以跳过
+ * if word1[i] === word2[j]: dp[i-1][j-1]
+ *
+ * 对于不相同字符串的操作：可以删除、插入、替换，如何选择呢？ (0...i) (0...j);
+ * 不同场景下的最佳操作：
+ *
+ * 1. 删除：删除某个字符串，剩余的字符串正好相等  dp[i-1][j]
+ * eg:      h   r
+ *      r
+ *
+ * 2. 插入：插入某个字符串，新增的字符串正好相等; 插入可以等价于删除
+ *    o  r
+ * r
+ *
+ * 3. 替换：没有更好的选择，只能替换  dp[i-1][j], dp[i][j-1], word1[i]和word2[j]替换一次就行
+ *
+ * h o r s e
+ * r o   s
+ *
+ * 只存在最大的公共序列长度为2： [r,s]或者[o,s]; 剩余的操作步骤是3步
+ *
+ * if word1[i] !== word2[j]:
+ *
+ * dp[i][j]  dp[i-1][j]  dp[i][j-1]
+ *
+ * dp[i-1][j] --->  dp[i][j]: 删除 word1[i]
+ * dp[i][j-1] --->  dp[i][j]: 删除 word2[j]
+ *
+ * dp[i][j] = (dp[i-1][j] , dp[i][j-1]) + 1  // 对于 word1[i]：可以替换为word2[i] ------- 这个是删除操作
+ *
+ * 替换的话，就是word[i] 和 word[j] 替换，对应的就是： dp[i][j] = dp[i - 1][j - 1] + 1;  也就是一次操作，完成word1[i] === word2[j]
+ *
+ *      ''    r   o   r   s   e
+ * ''   0     1   2   3   4   5
+ * h    1     2
+ * o    2
+ * r    3
+ * s    4
+ * e    5
+ *
+ * @param {string} word1
+ * @param {string} word2
+ * @return {number}
+ */
+var minDistance = function (word1, word2) {
+    const n1 = word1.length
+    const n2 = word2.length
+    const dp = Array.from(Array(n1 + 1), () => Array(n2 + 1).fill(0))
+
+    dp[0][0] = 1
+    for (let i = 1; i <= n1; i++) {
+        dp[i][0] = i
+    }
+    for (let j = 1; j <= n2; j++) {
+        dp[0][j] = j
+    }
+
+    for (let i = 1; i <= n1; i++) {
+        for (let j = 1; j <= n2; j++) {
+            if (word1[i - 1] === word2[j - 1]) {
+                dp[i][j] = dp[i - 1][j - 1]
+            } else {
+                // 其实就是对于 word1[0...i] --->  word2[0...j];
+                // 要么是 dp[i-1][j-1] 进行一个替换|删除操作，用dp[i-1][j-1]是因为跳过当前字符，无论是替换任意一个，都只需操作一次。
+                // 要么就是进行一个删除:
+                //     删word1[j],保留dp[i][j-1];
+                //     删 word1[i]，保留dp[i-1][j]
+                dp[i][j] = Math.min(dp[i - 1][j - 1], dp[i][j - 1], dp[i - 1][j]) + 1
+            }
+        }
+    }
+
+    return dp[n1][n2]
+}
+
+/**
+ * 647. 回文子串
+ * 给你一个字符串 s ，请你统计并返回这个字符串中 回文子串 的数目
+ *
+ * 输入：s = "abc" 输出：3 解释：三个回文子串: "a", "b", "c"
+ *
+ * 输入：s = "aaa" 输出：6 解释：6个回文子串: "a", "a", "a", "aa", "aa", "aaa"
+ *
+ * 回文字符串 是正着读和倒过来读一样的字符串
+ * 子字符串 是字符串中的由连续字符组成的一个序列
+ *
+ * 如果 i,j 是回文串，那么只要[i-1,j+1]相等，要么也是回文串
+ *
+ * dp[i][j]：
+ *
+ *
+ *     a   a   a
+ * a   1   2   3
+ * a   2   2   3
+ * a   3
+ *
+ * dp[i][j] 依赖 dp[i+1][j-1]
+ *
+ * 对于 s[i] === s[j]
+ * 1. 如果 i === j; 也就是单字符串： dp[i][j] = true； 一定是回文字符串
+ * 2. 如果 j - i = 1; 也就是 bab，也是回文串； dp[i][j] = true
+ * 3. 如果 j - i > 1； 这个时候就依赖 dp[i+1][j-1]了
+ *
+ * 从 dp[i][j]的递推依赖 dp[i+1][j-1]; 说明递推的遍历顺序是从下往上，从左往右
+ *
+ *               dp[i][j]
+ *  dp[i+1][j-1]
+ *
+ * @param {string} s
+ * @return {number}
+ */
+var countSubstrings = function (s) {
+    // 动态规划
+    // const n = s.length
+    // const dp = Array.from(Array(n), () => Array(n).fill(false))
+    // let count = 0
+    // for (let i = n - 1; i >= 0; i--) {
+    //     for (let j = i; j < n; j++) {
+    //         if (s[i] === s[j]) {
+    //             if (j - i <= 1) {
+    //                 dp[i][j] = true
+    //                 count++
+    //             } else if (dp[i + 1][j - 1]) {
+    //                 dp[i][j] = true
+    //                 count++
+    //             }
+    //         }
+    //     }
+    // }
+    // return count
+
+    /**
+     * 双指针:
+     * 找中心，然后向两边扩散，看是不是回文串
+     */
+    const n = s.length
+    let count = 0
+    for (let i = 0; i < n; i++) {
+        count += searchStr(i, i)
+        count += searchStr(i, i + 1)
+    }
+    function searchStr(i, j) {
+        let count = 0
+        while (i >= 0 && j < n && s[i] === s[j]) {
+            i--
+            j++
+            count++
+        }
+        return count
+    }
+    return count
+}
+
+/**
+ * 最长回文子序列
+ * 给你一个字符串 s ，找出其中最长的回文子序列，并返回该序列的长度
+ * 子序列定义为：不改变剩余字符顺序的情况下，删除某些字符或者不删除任何字符形成的一个序列
+ *
+ * 输入：s = "bbbab" 输出：4
+ * 解释：一个可能的最长回文子序列为 "bbbb" 。
+ *
+ * 输入：s = "cbbd" 输出：2
+ * 解释：一个可能的最长回文子序列为 "bb" 。
+ *
+ * 求最长回文子序列
+ *
+ *     b  b  b  a  b
+ * b   1  2  3  3  4
+ * b   0  1  2  2  3
+ * b      0  1  1  3
+ * a         0  1  1
+ * b               1
+ *
+ * i --------- j
+ * i -------- j-1
+ * i+1 ------- j
+ *
+ * 对于区间[i,j]下，如果s[i]=s[j], 最长子序列 = dp[i+1][j-1] + 2
+ *
+ * 如果 s[i] !== s[j]  dp[i][j] = dp[i-1][j] || dp[i][j-1]
+ *
+ * @param {string} s
+ * @return {number}
+ */
+var longestPalindromeSubseq = function (s) {
+    const n = s.length
+    const dp = Array.from(Array(n), () => Array(n).fill(0))
+
+    for (let i = 0; i < n; i++) {
+        dp[i][i] = 1
+    }
+
+    // ab
+    for (let i = n - 1; i >= 0; i--) {
+        for (let j = i + 1; j < n; j++) {
+            if (s[i] === s[j]) {
+                dp[i][j] = dp[i + 1][j - 1] + 2
+            } else {
+                dp[i][j] = Math.max(dp[i + 1][j], dp[i][j - 1])
+            }
+        }
+    }
+
+    return dp[0][n - 1]
+}
