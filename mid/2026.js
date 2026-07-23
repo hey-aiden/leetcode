@@ -9,12 +9,120 @@
  * 输入：hours = [9,9,6,0,6,6,9] 输出：3
  * 解释：最长的表现良好时间段是 [9,9,6]。
  *
+ *
+ *
  * @param {number[]} hours
  * @return {number}
  */
 var longestWPI = function (hours) {
-	/**
-	 * 计算 「劳累的天数」是严格 大于「不劳累的天数」 的最大长度
-	 */
-	
+    /**
+     * 计算 「劳累的天数」是严格 大于「不劳累的天数」 的最大长度
+     *
+     * hours = [9,9,6,0,6,6,9]
+     * 将数组中>8的设为1，小于8的设为-1
+     * [1, 1, -1, -1, -1, -1, 1]
+     * 找出前缀和：
+     * [0, 1, 2, 1, 0, -1, -2, -1]
+     *
+     *
+     */
+
+    // const n = hours.length
+    // const preSum = Array(n + 1).fill(0)
+
+    // const stk = [0]
+
+    // for (let i = 0; i <= n; i++) {
+    //     preSum[i + 1] = (hours[i] > 8 ? 1 : -1) + preSum[i]
+    //     const len = stk.length
+    //     if (i > 0 && preSum[stk[len - 1]] > preSum[i]) {
+    //         // 维护一个单调递减栈
+    //         stk.push(i)
+    //     }
+    // }
+
+    // let res = 0
+    // for (let r = n; r >= 1; r--) {
+    //     // 前缀和 > 0：  preSum[r] > preSum[l], 就可以保证： 前缀和是>0的， 也就是符合题意：「劳累的天数」是严格 大于「不劳累的天数」
+    //     // 所以前面要取找基于前缀和下标0的递减区间，然后挨个去和右区间 做 匹配
+    //     while (stk.length && preSum[stk[stk.length - 1]] < preSum[r]) {
+    //         res = Math.max(res, r - stk.pop())
+    //     }
+    // }
+    // return res
+
+    /**
+     * 前缀和 + 单调栈
+     */
+    const n = hours.length
+
+    const preSum = Array(n + 1).fill(0)
+
+    const stack = [0] // 维护一个单调栈 - 单调递减； 作为左边界的比较项
+
+    for (let i = 0; i <= n; i++) {
+        preSum[i + 1] = (hours[i] > 8 ? 1 : -1) + preSum[i]
+        if (preSum[stack[stack.length - 1]] > preSum[i]) {
+            // 存入更小的边界
+            stack.push(i)
+        }
+    }
+
+    let res = 0
+
+    for (let r = n; r >= 0; r--) {
+        // 缩小右边界，用每一个比 stack 大的前缀和，满足： preSum[r] - preSum[stack.pop()] > 0
+        while (stack.length && preSum[r] > preSum[stack[stack.length - 1]]) {
+            res = Math.max(res, r - stack.pop())
+        }
+    }
+    return res
+}
+
+/**
+ * 354. 俄罗斯套娃信封问题
+ *
+ * 输入：envelopes = [[5,4],[6,4],[6,7],[2,3]] 输出：3
+ * 解释：最多信封的个数为 3, 组合为: [2,3] => [5,4] => [6,7]。
+ *
+ * [[5,4],[6,4],[6,7],[2,3]]
+ *
+ *
+ * [[2,3], [5,4], [6,7], [6,4]]
+ *
+ * @param {number[][]} envelopes
+ * @return {number}
+ */
+var maxEnvelopes = function (envelopes) {
+    /**
+     * 1. 先对数组进行排序;
+     * 2. 问题转换：找到两个递增子序列
+     *
+     * 因为已经进行过排序了，所以只需要比较第二位数了
+     * 对于每一项，能累加的前提是： envelopes[0][1] > envelopes[1][1]
+     *
+     * 以下题解会超时，但是思路是对的
+     */
+    const n = envelopes.length
+    if (n === 0) return 0
+    envelopes.sort((a, b) => {
+        if (a[0] === b[0]) {
+            // 宽度一样，需要按照高度倒序
+            return b[1] - a[1]
+        } else {
+            return a[0] - b[0]
+        }
+    })
+
+    const f = new Array(n).fill(1)
+    let ans = 1
+    for (let i = 1; i < n; i++) {
+        for (let j = 0; j < i; j++) {
+            if (envelopes[j][1] < envelopes[i][1]) {
+                f[i] = Math.max(f[i], f[j] + 1)
+            }
+        }
+        ans = Math.max(ans, f[i])
+    }
+    return ans
 }
