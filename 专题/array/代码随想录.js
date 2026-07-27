@@ -157,13 +157,15 @@ var minSubArrayLen = function (target, nums) {
  * 54. 螺旋矩阵
  * 给你一个 m 行 n 列的矩阵 matrix ，请按照 顺时针螺旋顺序 ，返回矩阵中的所有元素。
  *
+ * 在螺旋矩阵的遍历过程中，只有从左往右，和从上往下是安全入口； 再完成从左往右，从上往下遍历后，需要重新判断边界
+ *
  * 输入：matrix = [[1,2,3],[4,5,6],[7,8,9]] 输出：[1,2,3,6,9,8,7,4,5]
  * 1  2  3
  * 4  5  6
  * 7  8  9
- * 
+ *
  * [[2,3,4],[5,6,7],[8,9,10],[11,12,13],[14,15,16]]
- * 
+ *
  * 2  3  4
  * 5  6  7
  * 8  9  10
@@ -188,58 +190,89 @@ var spiralOrder = function (matrix) {
     const row = matrix.length
     const col = matrix[0].length
 
-    if (row == 1) return matrix[0]
-    if (col == 1) return matrix.map((item) => item[0])
-
     const res = []
 
-    const nextRow = [0, row - 1]
-    const nextCol = [0, col - 1]
-
-    while (nextRow[0] <= nextRow[1] && nextCol[0] <= nextCol[1]) {
-        const topRow = nextRow[0]
-        const bottomRow = nextRow[1]
-        const leftCol = nextCol[0]
-        const rightCol = nextCol[1]
-
-        // 处理从左到右的数据
-        const rowLeftList = matrix[topRow]
-        let left = leftCol
-        while (left <= rightCol) {
-            res.push(rowLeftList[left])
+    let top = 0,
+        right = col - 1,
+        bottom = row - 1,
+        left = 0
+    while (top <= bottom && left <= right) {
+        // 从左往右
+        for (let i = left; i <= right; i++) {
+            res.push(matrix[top][i])
+        }
+        top++
+        // 从上往下
+        for (let i = top; i <= bottom; i++) {
+            res.push(matrix[i][right])
+        }
+        right--
+        // 从右往左
+        if (top <= bottom) {
+            // 要确认还有剩余行，所以需要额外判断
+            for (let i = right; i >= left; i--) {
+                res.push(matrix[bottom][i])
+            }
+        }
+        bottom--
+        // 从下往上
+        if (left <= right) {
+            // 确认是否还有剩余列
+            for (let i = bottom; i >= top; i--) {
+                res.push(matrix[i][left])
+            }
             left++
         }
-        nextRow[0]++ // 更新边界
+    }
+    return res
+}
 
-        // 当处理完第一个方向后，如果已经越界，那么数据清理完毕: 此时可能是内环最后一条路径
-        if (nextRow[0] > bottomRow) return res
+/**
+ * 59. 螺旋矩阵 II
+ * 给你一个正整数 n ，生成一个包含 1 到 n^2 所有元素，且元素按顺时针顺序螺旋排列的 n x n 正方形矩阵 matrix
+ *
+ * 输入：n = 3 输出：[[1,2,3],[8,9,4],[7,6,5]]
+ * 1  2  3
+ * 8  9  4
+ * 7  6  5
+ *
+ * @param {number} n
+ * @return {number[][]}
+ */
+var generateMatrix = function (n) {
+    // n x n: row = [0, n-1]; col = [0, n-1]
+    const res = Array.from(Array(n), () => Array(n).fill(0))
 
-        // 处理从上往下的右边界数据； 不处理最后那行，所以rowStep < bottomRow就行； 其实就是只处理开区间 (topRow, bottomRow)之间的数据
-        let rowStep = topRow + 1
-        while (rowStep < bottomRow) {
-            const useList = matrix[rowStep]
-            res.push(useList[rightCol])
-            rowStep++
+    let left = 0,
+        right = n - 1,
+        top = 0,
+        bottom = n - 1,
+        count = 1
+    while (count <= n * n) {
+        // 从左往右
+        for (let i = left; i <= right; i++) {
+            res[top][i] = count++
         }
-        nextCol[1]-- // 缩小右边界
-
-        // 处理从右往左的数据
-        let rowRightList = matrix[bottomRow]
-        let right = rightCol
-        while (right >= leftCol) {
-            res.push(rowRightList[right])
-            right--
+        top++
+        // 从上往下
+        for (let i = top; i <= bottom; i++) {
+            res[i][right] = count++
         }
-        nextRow[1]-- // 缩小底部边界
-
-        // 处理从下往上的数据
-        rowStep = bottomRow - 1
-        while (rowStep > topRow) {
-            const useList = matrix[rowStep]
-            res.push(useList[leftCol])
-            rowStep--
+        right--
+        // 从右往左
+        if (top <= bottom) {
+            for (let i = right; i >= left; i--) {
+                res[bottom][i] = count++
+            }
+            bottom--
         }
-        nextCol[0]++ // 更新下一轮边界
+        // 从下往上
+        if (left <= right) {
+            for (let i = bottom; i >= top; i--) {
+                res[i][left] = count++
+            }
+            left++
+        }
     }
     return res
 }
