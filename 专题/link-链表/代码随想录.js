@@ -210,5 +210,27 @@ var reverseList = function (head) {
  * @return {ListNode}
  */
 var removeNthFromEnd = function (head, n) {
+    /**
+     * 1 2 3 4 5
+     * dummyHead -> 1 -> 2 -> 3 -> 4 -> 5
+     * 假如要删除倒数第2个，也就是节点4； 
+     * 在双指针-快慢指针的设计中，最终的目的是快指针走到null， 此时慢指针走到3：
+     *      slow.next = slow.next.next
+     * 也就是最后一次循环是： 2 -> 3;   5 -> null
+     * 对应的步数是3步
+     */
+    const dummyHead = new ListNode()
+    dummyHead.next = head
+    let fast = dummyHead
+    let slow = dummyHead
+    for (let i = 0; i <= n; i++) {
+        fast = fast.next
+    }
+    while (fast) {
+        fast = fast.next
+        slow = slow.next
+    }
+    slow.next = slow.next.next
+    return dummyHead.next
 	
 }
