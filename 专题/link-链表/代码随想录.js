@@ -213,7 +213,7 @@ var removeNthFromEnd = function (head, n) {
     /**
      * 1 2 3 4 5
      * dummyHead -> 1 -> 2 -> 3 -> 4 -> 5
-     * 假如要删除倒数第2个，也就是节点4； 
+     * 假如要删除倒数第2个，也就是节点4；
      * 在双指针-快慢指针的设计中，最终的目的是快指针走到null， 此时慢指针走到3：
      *      slow.next = slow.next.next
      * 也就是最后一次循环是： 2 -> 3;   5 -> null
@@ -232,5 +232,103 @@ var removeNthFromEnd = function (head, n) {
     }
     slow.next = slow.next.next
     return dummyHead.next
-	
+}
+
+/**
+ * 160. 相交链表
+ *
+ * 给你两个单链表的头节点 headA 和 headB ，请你找出并返回两个单链表相交的起始节点。如果两个链表不存在相交节点，返回 null 。
+ *
+ * @param {ListNode} headA
+ * @param {ListNode} headB
+ * @return {ListNode}
+ */
+var getIntersectionNode = function (headA, headB) {
+    /**
+     *
+     * 如果存在有环，那么headA和headB在走完各自的长度后,存在相交的节点 lenA + lenB = len B + lenA ; 存在一个相交的点
+     * 同时交换了位置之后的两个节点，一定都会走到节点null,此时 stepA 和 stepB 都是尾结点null
+     *  1  2  3
+     *           5  6
+     *     3  4
+     *
+     */
+
+    let stepA = headA
+    let stepB = headB
+
+    while (stepA !== null && stepB !== null) {
+        if (stepA === stepB) return stepA
+        // 这里的实现等于跳过了stepA 和 stepB 为 null 的节点赋值了 ❌
+        // stepA = stepA.next ? stepA.next : headB
+        // stepB = stepB.next ? stepB.next : headA
+        stepA = stepA === null ? headB : stepA.next
+        stepB = stepB === null ? headA : stepB.next
+    }
+
+    return null
+}
+
+/**
+ * 141. 环形链表 : 给你一个链表的头节点 head ，判断链表中是否有环。
+ *
+ * 快慢指针移动，如果有环，最终会相交，如果无环，会走到Null
+ * 快指针走2步；慢指针走1步；
+ *
+ * @param {ListNode} head
+ * @return {boolean}
+ */
+var hasCycle = function (head) {
+    if (head === null || head.next === null) return false
+    let fastHead = head
+    let slowHead = head
+    while (fastHead && fastHead.next) {
+        fastHead = fastHead.next.next
+        slowHead = slowHead.next
+        if (fastHead === slowHead) return true
+    }
+    return false
+}
+
+/**
+ * LCR 022. 环形链表 II
+ * 给定一个链表，返回链表开始入环的第一个节点。 从链表的头节点开始沿着 next 指针进入环的第一个节点为环的入口节点。如果链表无环，则返回 null
+ *
+ * 对比[141.环形链表]，就是要返回第一次相交产生环的节点
+ * @param {ListNode} head
+ * @return {ListNode}
+ */
+var detectCycle = function (head) {
+    /**
+     * 判断是否有环可以用快慢指针，如果要找到环的交点呢
+     *
+     */
+    if (head === null || head.next == null) return null
+    let fastHead = head
+    let slowHead = head
+
+    while (fastHead && fastHead.next) {
+        fastHead = fastHead.next.next
+        slowHead = slowHead.next
+        if (fastHead === slowHead) {
+            // 快慢指针相遇
+            let ptr = head
+            while (ptr !== fastHead) {
+                ptr = ptr.next
+                fastHead = fastHead.next
+            }
+            return ptr
+        }
+    }
+    return null
+
+    // map实现：存储每个节点的信息
+    // let nodeMap = new Set()
+    // let node = head
+    // while (node) {
+    //     if (nodeMap.has(node)) return node
+    //     nodeMap.add(node)
+    //     node = node.next
+    // }
+    // return null
 }
