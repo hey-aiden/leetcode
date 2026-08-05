@@ -14,16 +14,29 @@
  */
 var lowestCommonAncestor = function (root, p, q) {
     /**
-     * 找到一个root节点，它的子树中，既包含节点p, 又包含节点q
+     * 1. 确定子问题及边界情况：
+     *  - 当前节点是p,并且q是p的子节点； root.val === p && root.child has q
+     *  - 当前节点是q,并且p是q的子节点； root.val === q && root.child has p
+     *  - p、q分别是节点n的子节点；     root.child has q && root.child has p
      *
-     * 假设某个节点为true，意味着拥有p||q其中的某一个节点  root.val == p.val || root.left.val === p.val || root.right.val == p.val
-     * 当节点同时满足子树下的值包含拥有 q/p 的这两种情况，那么我们就定义该节点为一个公共祖先节点
+     * 2. 确定遍历方式：前中后序遍历？
+     *  - 对于root节点，要先知道它的子节点是否包含p||q；所以这里用后续遍历
      */
 
+    let res = null
     function dfs(root) {
         if (root === null) return false
-        if (root.val === p.val || root.val === q.val) return true
 
-		
+        let left = dfs(root.left)
+        let right = dfs(root.right)
+
+        if ((left && right) || ((root.val === p.val || root.val === q.val) && (left || right))) {
+            res = root
+        }
+
+        // 对于一个node，存在的情况包括：它是节点p，并且它的子树存在节点q; 它是节点p,并且它的子树存在节点q； 它只包含节点p或者q； 普通节点
+        return left || right || root.val === q.val || root.val === p.val
     }
+    dfs(root)
+    return res
 }

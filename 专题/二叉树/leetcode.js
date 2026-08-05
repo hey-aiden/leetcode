@@ -710,6 +710,34 @@ var mergeTrees = function (root1, root2) {
         root.right = dfs(root1.right, root2.right)
         return root
     }
-
     return dfs(root1, root2)
+}
+
+/**
+ * 700. 二叉搜索树中的搜索
+ * 给定二叉搜索树（BST）的根节点 root 和一个整数值 val;
+ * 你需要在 BST 中找到节点值等于 val 的节点。 返回以该节点为根的子树。 如果节点不存在，则返回 null
+ *
+ * @param {TreeNode} root
+ * @param {number} val
+ * @return {TreeNode}
+ */
+var searchBST = function (root, val) {
+    /**
+     * 二叉搜索树的特性： 左子树一定比root节点小； 右子树一定比root节点大
+     */
+
+    let node
+    function searchNode(root) {
+        if (root === null) return
+        if (root.val > val) {
+            return searchNode(root.left)
+        } else if (root.val === val) {
+            node = root
+        } else {
+            return searchNode(root.right)
+        }
+    }
+    searchNode(root)
+    return node || null
 }
