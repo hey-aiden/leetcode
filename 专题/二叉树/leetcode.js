@@ -1058,24 +1058,16 @@ var trimBST = function (root, low, high) {
     function updateTree(root, prev) {
         if (root === null) return
 
-        if (root.val >= low && root.val <= high && prev !== null && newRoot === null) {
-            newRoot = root
-        }
+        // 前序遍历很重要的一点就是，对于root节点的处理，是否直接在root节点上处理，还是在root.left/root.right节点上处理
+
+        // 处理root节点变更
+
+        const leftNode = root.left
+        const rightNode = root.right
 
         if (root.val < low) {
             root.left = null
+            return updateTree(root.right, root)
         }
-        if (root.val > high) {
-            root.right = null
-        }
-
-        updateTree(root.right, root)
-        updateTree(root.left, root)
-
-        // 正好在区间内的处理
     }
-
-    updateTree(root, null)
-
-    return newRoot || root
 }
