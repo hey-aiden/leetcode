@@ -741,3 +741,51 @@ var searchBST = function (root, val) {
     searchNode(root)
     return node || null
 }
+
+/**
+ * LCR 193. 二叉搜索树的最近公共祖先
+ * 给定一个二叉搜索树, 找到该树中两个指定节点的最近公共祖先
+ *
+ * @param {TreeNode} root
+ * @param {TreeNode} p
+ * @param {TreeNode} q
+ * @return {TreeNode}
+ */
+var lowestCommonAncestor = function (root, p, q) {
+    /**
+     * 结合p/q的值，确定搜索范围
+     */
+
+    let minVal = Math.min(p.val, q.val)
+    let maxVal = Math.max(p.val, q.val)
+
+    let node = null
+
+    function searchNode(root) {
+        if (root === null) return false
+
+        // 基于二叉搜索树的剪枝优化：
+        if (root.val > maxVal) {
+            // 当前节点比p/q最大值还大，那么往左边搜索确定
+            return searchNode(root.left)
+        }
+        if (root.val < minVal) {
+            return searchNode(root.right)
+        }
+
+        // 在正常区间范围内，正常搜索左右区间即可
+        let leftFlag = searchNode(root.left)
+        let rightFlag = searchNode(root.right)
+
+        // 判断每一个root节点； 到这里差不多左右子树往上回的阶段了
+
+        if ((leftFlag && rightFlag) || ((root.val === q.val || root.val === p.val) && (leftFlag || rightFlag))) {
+            node = root
+        }
+
+        return root.val === q.val || root.val === p.val || leftFlag || rightFlag
+    }
+
+    searchNode(root)
+    return node
+}
