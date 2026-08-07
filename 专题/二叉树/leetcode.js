@@ -1025,6 +1025,11 @@ var deleteNode = function (root, key) {
 /**
  * 669. 修剪二叉搜索树
  *
+ * ************
+ * 二叉搜索树的左右子树都有可能符合条件，所以对于root节点的判断，并不能直接用于对左右子树的剪枝操作
+ * 判断完root.val, 不能直接基于 root.left.val 的值，来判断当前 root.left 是否需要抛弃； 因为可能存在 root.left.right 符合条件
+ * ************
+ *
  * 给你二叉搜索树的根节点 root ，同时给定最小边界low 和最大边界 high
  *
  * 通过修剪二叉搜索树，使得所有节点的值在[low, high]中。
@@ -1051,23 +1056,195 @@ var trimBST = function (root, low, high) {
      * 确定遍历方式：前序遍历，通过 root 节点，来判断 左右子树的走向。
      *
      * 什么情况下更新根节点：
+     *
      */
 
-    let newRoot = null
+    let newRoot = root
 
-    function updateTree(root, prev) {
+    function updateTree(root, prev, flag) {
         if (root === null) return
 
-        // 前序遍历很重要的一点就是，对于root节点的处理，是否直接在root节点上处理，还是在root.left/root.right节点上处理
+        /**
+         * [low. high]是一个左闭右闭
+         * 1. 先完成修枝，再考虑更新root节点
+         *
+         * 2. 涉及到删除操作，还是带上左右子树的处理
+         */
 
-        // 处理root节点变更
-
-        const leftNode = root.left
-        const rightNode = root.right
-
+        // 1. 处理不合理的root节点
         if (root.val < low) {
-            root.left = null
-            return updateTree(root.right, root)
+            // 当前节点比low更小，那么只要考虑right的情况;
+            // 从右子树中找出第一个 >= low的数
+            // 这里不用考虑rightNode的左子树，因为如果 rightNode 节点都比 min 小了，它的左区间只会更小
+            let rightNode = root.right || null
+            while (rightNode && rightNode.val < low) {
+                rightNode = rightNode.right
+            }
+
+            if (prev === null) {
+                if (rightNode && rightNode.val > high) {
+                    updateTree(rightNode, null)
+                } else {
+                    newRoot = rightNode
+                }
+            } else {
+                // 找到第一个比 low 大的节点
+                prev[flag] = rightNode
+            }
+
+            // 从新的节点处理
+            if (rightNode) {
+                updateTree(rightNode.left, rightNode, 'left')
+                updateTree(rightNode.right, rightNode, 'right')
+            }
+            return
         }
+        if (root.val > high) {
+            // 当前节点超过最大值，那么只需要看左子树; 从左子树中，找到第一个比high小的树
+            let leftNode = root.left || null
+            while (leftNode && leftNode.val > high) {
+                leftNode = leftNode.left
+            }
+
+            // 最左侧的可能会比目标值还要小
+
+            if (prev === null) {
+                if (leftNode && leftNode.val < low) {
+                    return updateTree(leftNode, null)
+                } else {
+                    newRoot = leftNode
+                }
+            } else {
+                prev[flag] = leftNode
+            }
+
+            // 从新的节点处理
+            if (leftNode) {
+                updateTree(leftNode.left, leftNode, 'left')
+                updateTree(leftNode.right, leftNode, 'right')
+            }
+            return
+        }
+
+        // 2. 经过对root的处理，这里开始修建有效子树
+        updateTree(root.left, root, 'left')
+        updateTree(root.right, root, 'right')
     }
+
+    updateTree(root, null)
+
+    return newRoot
+
+    //更简单实现
+
+    function updateTree(root, low, high) {
+        if (root === null) return null
+        if (root.val < low) return trimBST(root.right, low, high)
+        if (root.val > high) return trimBST(root.left, low, high)
+        root.left = trimBST(root.left, low, high)
+        root.right = trimBST(root.right, low, high)
+        return root
+    }
+    return updateTree(root, low, high)
+}
+
+/**
+ * 108. 将有序数组转换为二叉搜索树
+ *
+ * 给你一个整数数组 nums ，其中元素已经按 升序 排列，请你将其转换为一棵 平衡 二叉搜索树。
+ *
+ * 平衡二叉搜索树 - 左右节点高度不能超过1；
+ *
+ * @param {number[]} nums
+ * @return {TreeNode}
+ */
+var sortedArrayToBST = function (nums) {
+    /**
+     *  要做平衡二叉搜索树，那么说明左右子树高度不能超过1
+     *
+     * [1,4,5,8,9]
+     *
+     *      5
+     *    4  9
+     *  1   8
+     *
+     * 
+     * [-10,-3,0,5,9]
+     * 
+     *          0
+     *    -10       9
+     *  null  -3   5
+     * 
+     * 
+     *       0
+     *    -3    9
+     * -10     5
+
+
+     * 中序遍历是递增序列： 所以对于有序数组，从中间划分，就是一半是左子树，一半是右子树
+     *
+     */
+
+    function buildTree(left, right) {
+        if (left > right) return null
+
+        const mid = left + Math.floor((right - left) / 2)
+
+        const root = new TreeNode(nums[mid])
+
+        root.left = buildTree(left, mid - 1)
+        root.right = buildTree(mid + 1, right)
+
+        return root
+    }
+    return buildTree(0, nums.length - 1)
+}
+
+/**
+ * 538. 把二叉搜索树转换为累加树
+ *
+ * 给出二叉 搜索 树的根节点 root，该树的节点值各不相同，
+ * 请你将其转换为累加树（Greater Sum Tree），将其转换为一个更大的树，使得:
+ *
+ *     原始二叉搜索树中的每个节点值都变为原本值加上原本二叉搜索树中所有比该节点值大的节点值的总和
+ *
+ * @param {TreeNode} root
+ * @return {TreeNode}
+ */
+var convertBST = function (root) {
+    /**
+     * 收集所有的root，然后数组倒序遍历;
+     *
+     * 1. 试试倒序遍历，也就是 right -> root -> left
+     */
+
+    const nodeList = []
+
+    function dfs(root) {
+        if (root === null) return
+        dfs(root.left)
+        nodeList.push(root)
+        dfs(root.right)
+    }
+    dfs(root)
+
+    const len = nodeList.length
+
+    for (let i = len - 2; i >= 0; i--) {
+        const node = nodeList[i]
+        node.val = node.val + nodeList[i + 1].val
+    }
+    return root
+
+    // 反中序遍历
+    let prev = 0
+    function dfs(root) {
+        if (root == null) return
+        dfs(root.right)
+        root.val = root.val + prev
+        prev = root.val
+        dfs(root.left)
+    }
+    dfs(root)
+    return root
 }

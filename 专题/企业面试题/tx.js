@@ -40,7 +40,14 @@ var lowestCommonAncestor = function (root, p, q) {
     dfs(root)
     return res
 
-    /** 对于二叉树的最近公共祖先，还有一种实现方式： */
+    /** 对于二叉树的最近公共祖先，还有一种实现方式：
+     * 
+     * 基于p/q是一定存在于该二叉树中； 所以最终一定会存在一个节点，满足：left !== null && right !== null
+     * 
+     * 核心思路：
+     *  -- 利用前序位置提前发现 p/q 节点并向上传递，利用后序位置收集左右子树返回结果，当左右同时存在有效节点时确定当前 root 是最近公共祖先
+     * 
+     */
     const travelTree = function (root) {
         // 2. 确定递归终止条件： 如果头结点包含其中一项，那么头结点就一定也只能是唯一一个公共祖先了
         if (root === null || root === p || root === q) {
@@ -50,9 +57,10 @@ var lowestCommonAncestor = function (root, p, q) {
         let left = travelTree(root.left)
         let right = travelTree(root.right)
         if (left !== null && right !== null) {
-            // 这里是返回最近的公共祖先节点
+            // 这里是返回最近的公共祖先节点; 兜底root作为根节点公共祖先
             return root
         }
+        // 这里是基于左子树和右子树存在p/q的节点； 也可以用 return left || right
         if (left === null) {
             return right
         }
@@ -60,3 +68,4 @@ var lowestCommonAncestor = function (root, p, q) {
     }
     return travelTree(root)
 }
+
