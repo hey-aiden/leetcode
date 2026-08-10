@@ -2367,7 +2367,7 @@ var minDistance = function (word1, word2) {
     const n2 = word2.length
     const dp = Array.from(Array(n1 + 1), () => Array(n2 + 1).fill(0))
 
-    dp[0][0] = 1
+    dp[0][0] = 0
     for (let i = 1; i <= n1; i++) {
         dp[i][0] = i
     }
