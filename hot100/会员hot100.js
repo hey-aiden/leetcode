@@ -521,4 +521,172 @@ var canPermutePalindrome = function (s) {
  * @param {string[][]} similarPairs
  * @return {boolean}
  */
-var areSentencesSimilar = function (sentence1, sentence2, similarPairs) {}
+/**
+ * @param {string[]} sentence1
+ * @param {string[]} sentence2
+ * @param {string[][]} similarPairs
+ * @return {boolean}
+ */
+var areSentencesSimilar = function (sentence1, sentence2, similarPairs) {
+    const lenS1 = sentence1.length
+    const lenS2 = sentence2.length
+    if (lenS1 !== lenS2) return false
+    const sMap = new Map()
+    for (const sList of similarPairs) {
+        const [word1, word2] = sList
+
+        if (!sMap.has(word1)) {
+            sMap.set(word1, [])
+        }
+        if (!sMap.has(word2)) {
+            sMap.set(word2, [])
+        }
+
+        sMap.get(word1).push(word2)
+        sMap.get(word2).push(word1)
+    }
+    console.log(sMap)
+
+    for (let i = 0; i < lenS1; i++) {
+        const word1 = sentence1[i]
+        const word2 = sentence2[i]
+
+        if (word1 !== word2) {
+            if (!sMap.size) return false
+
+            if (!((sMap.has(word1) && sMap.get(word1).includes(word2)) || (sMap.has(word2) && sMap.get(word2).includes(word1)))) return false
+        }
+    }
+
+    return true
+}
+
+/**
+ * 1474. 删除链表 M 个节点之后的 N 个节点
+ * @param {ListNode} head
+ * @param {number} m
+ * @param {number} n
+ * @return {ListNode}
+ */
+var deleteNodes = function (head, m, n) {
+    /**
+     * 输入: head = [1,2,3,4,5,6,7,8,9,10,11], m = 1, n = 3
+     * 输出: [1,5,9] 解析: 返回删除结点之后的链表的头结点.
+     *
+     * 其实转换题意就是：m-保留的节点； n-删除的节点
+     *
+     */
+    const dummyHead = new ListNode(0, head)
+
+    let node = dummyHead
+    let keepStep = m
+    let delStep = n
+
+    while (node !== null) {
+        while (node !== null && keepStep > 0) {
+            node = node.next
+            keepStep--
+        }
+        let nextNode = node
+        while (nextNode !== null && delStep > 0) {
+            nextNode = nextNode.next
+            delStep--
+        }
+        if (node !== null) {
+            node.next = nextNode !== null ? nextNode.next : null
+        }
+        keepStep = m
+        delStep = n
+    }
+    return dummyHead.next
+}
+
+/**
+ * 270. 最接近的二叉搜索树值
+ *
+ * 给你二叉搜索树的根节点 root 和一个目标值 target
+ *
+ * 请在该二叉搜索树中找到最接近目标值 target 的数值。如果有多个答案，返回最小的那个。
+ *
+ * 输入：root = [4,2,5,1,3], target = 3.714286 输出：4
+ *
+ * @param {TreeNode} root
+ * @param {number} target
+ * @return {number}
+ */
+var closestValue = function (root, target) {
+    const res = []
+
+    function searchVal(root) {
+        if (root === null) return
+
+        /** 命中区间，则 root.val 保存 [root.val, root.right], [root.left, root.val] */
+
+        if (root.val === target) {
+            res.push(root.val)
+        }
+
+        if (root.val > target) {
+            if ((root.left && root.left.val < target) || root.left === null) {
+                res.push(root.val)
+            }
+            return searchVal(root.left)
+        }
+
+        if (root.val < target) {
+            if ((root.right && root.right.val > target) || root.right === null) {
+                res.push(root.val)
+            }
+            return searchVal(root.right)
+        }
+    }
+    searchVal(root)
+
+    if (res.length == 1) return res[0]
+
+    // 返回最小的那个
+    let minNum = [Math.abs(res[0] - target), res[0]]
+
+    for (let i = 1; i < res.length; i++) {
+        const dif = Math.abs(res[i] - target)
+        if (dif < minNum[0]) {
+            minNum[0] = dif
+            minNum[1] = res[i]
+        }
+        if (dif === minNum[0] && res[i] < minNum[1]) {
+            minNum[1] = res[i]
+        }
+    }
+
+    return minNum[1]
+
+    console.log(res)
+}
+
+/**
+ * 298. 二叉树最长连续序列
+ *
+ * 给你一棵指定的二叉树的根节点 root ，请你计算其中 最长连续序列路径 的长度
+ *
+ * 最长连续序列路径 是依次递增 1 的路径。该路径，可以是从某个初始节点到树中任意节点，通过「父 - 子」关系连接而产生的任意路径。且必须从父节点到子节点，反过来是不可以的
+ *
+ * @param {TreeNode} root
+ * @return {number}
+ */
+var longestConsecutive = function (root) {
+    let maxDeep = 1
+    function dfs(root, prev, deep) {
+        if (root == null) return
+
+        const curDeep = root.val === prev + 1 ? deep + 1 : 1
+
+        maxDeep = Math.max(maxDeep, curDeep)
+
+        root.left && dfs(root.left, root.val, curDeep)
+        root.right && dfs(root.right, root.val, curDeep)
+    }
+
+    dfs(root, root.val, 1)
+
+    return maxDeep
+}
