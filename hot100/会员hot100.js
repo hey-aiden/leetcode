@@ -690,3 +690,329 @@ var longestConsecutive = function (root) {
 
     return maxDeep
 }
+
+/**
+ * 487. 最大连续1的个数 II
+ *
+ * 给定一个二进制数组 nums ，如果最多可以翻转一个 0 ，则返回数组中连续 1 的最大个数
+ *
+ * 输入：nums = [1,0,1,1,0] 输出：4
+ * 解释：翻转第一个 0 可以得到最长的连续 1。 当翻转以后，最大连续 1 的个数为 4。
+ *
+ * @param {number[]} nums
+ * @return {number}
+ */
+var findMaxConsecutiveOnes = function (nums) {
+    let zeroSet = new Set()
+
+    const len = nums.length
+
+    let left = 0,
+        right = 0
+
+    let res = 0
+    let count = 0
+    while (right < len) {
+        const num = nums[right]
+
+        if (num === 1) {
+            count++
+        }
+
+        if (num === 0) {
+            if (zeroSet.has(0)) {
+                res = Math.max(res, count)
+            }
+            while (zeroSet.has(0)) {
+                if (nums[left] === 0) {
+                    zeroSet.delete(0)
+                }
+                count--
+                left++
+            }
+            zeroSet.add(0)
+            count++
+        }
+        right++
+    }
+    return Math.max(res, count)
+}
+
+/**
+ * 1100. 长度为 K 的无重复字符子串
+ *
+ * 给你一个字符串 s，找出所有长度为 k 且不含重复字符的子串，请你返回全部满足要求的子串的 数目
+ *
+ * @param {string} s
+ * @param {number} k
+ * @return {number}
+ */
+var numKLenSubstrNoRepeats = function (s, k) {
+    // 长度为K，且不包含重复字符的 子串
+
+    const strSet = new Set()
+
+    const len = s.length
+
+    let left = 0,
+        right = 0,
+        count = 0
+
+    while (right < len) {
+        const char = s[right]
+
+        while (strSet.has(char)) {
+            strSet.delete(s[left])
+            left++
+        }
+        strSet.add(char)
+
+        if (strSet.size === k) {
+            count++
+            strSet.delete(s[left])
+            left++
+        }
+
+        right++
+    }
+
+    return count
+}
+
+/**
+ * 1198. 找出所有行中最小公共元素
+ *
+ * 给你一个 m x n 的矩阵 mat，其中每一行的元素均符合 严格递增
+ * 请返回 所有行中的 最小公共元素
+ * 如果矩阵中没有这样的公共元素，就请返回 -1
+ *
+ * 输入：mat = [[1,2,3,4,5],[2,4,5,8,10],[3,5,7,9,11],[1,3,5,7,9]] 输出：5
+ * 1 2 3 4 5
+ * 2 4 5 8 10
+ * 3 5 7 9 11
+ * 1 3 5 7 9
+ *
+ * @param {number[][]} mat
+ * @return {number}
+ */
+var smallestCommonElement = function (mat) {
+    // 先找出所有的公共元素
+    const rowLen = mat.length
+    const numMap = new Map()
+    for (const numList of mat) {
+        for (const num of numList) {
+            numMap.set(num, (numMap.get(num) || 0) + 1)
+        }
+    }
+    let res = Infinity
+    for (const num of numMap.keys()) {
+        if (numMap.get(num) === rowLen) {
+            res = Math.min(res, num)
+        }
+    }
+    return res === Infinity ? -1 : res
+}
+
+/**
+ * 249. 移位字符串分组
+ *
+ * 给定一个字符串数组 strings，将属于相同移位序列的所有 strings[i] 进行分组。你可以以 任意顺序 返回答案
+ *
+ * @param {string[]} strings
+ * @return {string[][]}
+ */
+var groupStrings = function (strings) {}
+
+/**
+ * 422. 有效的单词方块
+ *
+ * 给你一个字符串数组 words，如果它能形成一个有效的 单词方块 ，则返回 true
+ *
+ * 有效的单词方块是指此由字符串数组组成的文字方块的 第 k 行 和 第 k 列所显示的字符串完全相同，其中 0 <= k < max(numRows, numColumns)
+ *
+ * 输入: words = ["abcd","bnrt","crmy","dtye"] 输出: true
+ * a b c d
+ * b n r t
+ * c r m y
+ * d t y e
+ * 解释:
+ * 第 1 行和第 1 列都读作 "abcd"。
+ * 第 2 行和第 2 列都读作 "bnrt"。
+ * 第 3 行和第 3 列都读作 "crmy"。
+ * 第 4 行和第 4 列都读作 "dtye"。
+ * 因此，它构成了一个有效的单词方块。
+ *
+ *
+ * a b c d
+ * b n r t
+ * c r m
+ * d t
+ *
+ *
+ * b a l l
+ * a s e e
+ * l e t
+ * l e p
+ *
+ * @param {string[]} words
+ * @return {boolean}
+ */
+var validWordSquare = function (words) {
+    const row = words.length
+    const col = words[0].length
+
+    for (let i = 0; i < row; i++) {
+        const rowStr = words[i]
+
+        let colStr = ''
+        for (const rWord of words) {
+            const c = rWord[i] || ''
+            colStr = colStr + c
+        }
+
+        if (colStr !== rowStr) return false
+    }
+    return true
+}
+
+/**
+ * 531. 孤独像素 I
+ *
+ * 给你一个大小为 m x n 的图像 picture ，图像由黑白像素组成，'B' 表示黑色像素，'W' 表示白色像素，请你统计并返回图像中 黑色 孤独像素的数量
+ *
+ * 黑色孤独像素 的定义为：如果黑色像素 'B' 所在的同一行和同一列不存在其他黑色像素，那么这个黑色像素就是黑色孤独像素
+ *
+ * @param {character[][]} picture
+ * @return {number}
+ */
+var findLonelyPixel = function (picture) {
+    const rowLen = picture.length
+    const colLen = picture[0].length
+
+    const colSet = new Set()
+
+    let count = 0
+
+    for (let r = 0; r < rowLen; r++) {
+        if (!picture[r].includes('B')) continue
+        for (let c = 0; c < colLen; c++) {
+            if (colSet.has(c)) continue
+            const char = picture[r][c]
+            if (char === 'B') {
+                // 命中黑块
+                const res = checkBlack(r, c)
+                if (res) {
+                    count++
+                }
+            }
+        }
+    }
+
+    function checkBlack(r, c) {
+        let countCol = 0
+        for (const pic of picture) {
+            if (pic[c] === 'B') {
+                colSet.add(c)
+                countCol++
+            }
+        }
+        for (const rChat of picture[r]) {
+            if (rChat === 'B') {
+                countCol++
+            }
+        }
+
+        return countCol === 2
+    }
+
+    return count
+}
+
+/**
+ * 272. 最接近的二叉搜索树值 II
+ * 给定二叉搜索树的根 root 、一个目标值 target 和一个整数 k ，返回BST中最接近目标的 k 个值。你可以按 任意顺序 返回答案
+ * @param {TreeNode} root
+ * @param {number} target
+ * @param {number} k
+ * @return {number[]}
+ */
+var closestKValues = function (root, target, k) {
+    let res = []
+
+    function searchVal(root) {
+        if (root == null) return
+
+        if (root.val === target) {
+            res.push(root.val)
+        }
+
+        if (root.val < target) {
+            res.push(root.val)
+            return searchVal(root.right)
+        }
+
+        if (root.val > target) {
+            res.push(root.val)
+            return searchVal(root.left)
+        }
+    }
+
+    searchVal(root)
+
+    res.sort((a, b) => Math.abs(a - target) - Math.abs(b - target))
+    return res.slice(0, k)
+}
+
+/**
+ * 1228. 等差数列中缺失的数字
+ *
+ * 在某个数组 arr 中，值符合等差数列的数值规律：在 0 <= i < arr.length - 1 的前提下，arr[i+1] - arr[i] 的值都相等
+ *
+ * 我们会从该数组中删除一个 既不是第一个 也 不是最后一个的值，得到一个新的数组  arr
+ *
+ * 给你这个缺值的数组 arr，返回 被删除的那个数
+ *
+ * 输入：arr = [5,7,11,13] 输出：9 解释：原来的数组是 [5,7,9,11,13]。
+ * [null,2,4,2]
+ *
+ * 输入：arr = [15,13,12]  输出：14   解释：原来的数组是 [15,14,13,12]。
+ * [-2, -1, null]
+ *
+ * @param {number[]} arr
+ * @return {number}
+ */
+var missingNumber = function (arr) {
+    // 1. 找到正确的等差值； 2. 返回缺失的数
+
+    // 自己构造等差数列计算
+    const n = arr.length
+    const dif = (arr[n - 1] - arr[0]) / n
+    let basicNum = arr[0]
+    for (const num of arr) {
+        if (num !== basicNum) {
+            return basicNum
+        }
+        basicNum += dif
+    }
+    return basicNum
+
+    // 二分查找
+    const n = arr.length
+    const dif = (arr[n - 1] - arr[0]) / n
+
+    let left = 0,
+        right = n - 1
+
+    while (left < right) {
+        const mid = Math.floor((right + left) / 2)
+
+        if (arr[mid] === arr[0] + mid * dif) {
+            left = mid + 1
+        } else {
+            // `mid` 前 - [left, mid]缺少一个数字，包括 `mid` 本身。
+            right = mid
+        }
+    }
+
+    return arr[0] + left * dif
+}
