@@ -20,17 +20,26 @@ var minCuttingCost = function (n, m, k) {
      * 2. 如果 n,m > k; 那么成本 = (n-k)*k
      * 3. 分别计算两根木头的最小成本
      * 4. 1 <= n, m <= 2 * k
+     *
+     * 输入： n = 6, m = 5, k = 5 输出： 5
+     * 解释： 将长度为 6 的木材切割成长度为 1 和 5 的两段，成本为 1 * 5 == 5。现在三段长度分别为 1、5 和 5 的木材可以分别装载到每辆卡车。
+     *
      */
 
     function cost(len) {
         if (len <= k) return 0
+        let left = len - k,
+            right = k
+        let minCost = (len - k) * k
+        while (left <= right) {
+            const sum = left * right
 
-        let left = 0,
-            right = len
-        let minCost = -Infinity
-        while (left < right) {
-            const mid = left + Math.ceil((right - left) / 2)
+            minCost = Math.min(sum, minCost)
+
+            left++
+            right--
         }
+        return minCost
     }
 
     return cost(n) + cost(m)

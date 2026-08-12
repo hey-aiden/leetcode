@@ -226,7 +226,68 @@ var compress = function (chars) {
  *
  * 求在该柱状图中，能够勾勒出来的矩形的最大面积
  *
+ * 输入：heights = [2,1,5,6,2,3] 输出：10 解释：最大的矩形为图中红色区域，面积为 10
+ *
  * @param {number[]} heights
  * @return {number}
  */
-var largestRectangleArea = function (heights) {}
+var largestRectangleArea = function (heights) {
+    const stack = []
+
+    heights.push(0) // 给一个边界
+
+    const len = heights.length
+
+    let maxArea = 0
+
+    /**
+     * 核心思想是找到 柱子[i]中，左边比它小的以及右边比它小的元素，然后计算面积
+     */
+    for (let i = 0; i < len; i++) {
+        // 因为每当遍历的元素高度>=栈顶的元素时，都是直接入栈；当遇到小的元素时， 挨个从栈里面拉出比当前遍历元素大的元素，然后计算对应的矩形面积
+        while (stack.length && heights[i] < height[stack[stack.length - 1]]) {
+            const height = heights[stack.pop()]
+
+            const left = stack.length ? stack[stack.length - 1] : -1
+
+            const width = i - left - 1 // 多-1是因为当前i并不参与面积计算
+
+            maxArea = Math.max(maxArea, width * height)
+        }
+        // i 比 栈口元素大的话， 直接入栈； 维护的是一个单调递增区间
+        stack.push(i)
+    }
+
+    return maxArea
+}
+
+/**
+ * 42. 接雨水
+ *
+ * 给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
+ *
+ * @param {number[]} height
+ * @return {number}
+ */
+var trap = function (height) {
+    /**
+     * 栈口记录高度
+     */
+
+    const stack = []
+    let capacity = 0
+
+    const len = height.length
+
+    // 右边界要比左边高，才有可能蓄水； 而且要起码高一个距离
+    for (let i = 0; i < len; i++) {
+        let useH
+        while (stack.length > 2 && height[i] >= height[stack[0]]) {
+            // 计算前面可用容量
+            useH = height[stack[0]]
+            capacity += useH - height[stack.pop()]
+        }
+        stack.push(i)
+    }
+    return capacity
+}
