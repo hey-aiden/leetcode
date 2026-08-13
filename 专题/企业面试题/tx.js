@@ -233,13 +233,9 @@ var compress = function (chars) {
  */
 var largestRectangleArea = function (heights) {
     const stack = []
-
     heights.push(0) // 给一个边界
-
     const len = heights.length
-
     let maxArea = 0
-
     /**
      * 核心思想是找到 柱子[i]中，左边比它小的以及右边比它小的元素，然后计算面积
      */
@@ -247,31 +243,52 @@ var largestRectangleArea = function (heights) {
         // 因为每当遍历的元素高度>=栈顶的元素时，都是直接入栈；当遇到小的元素时， 挨个从栈里面拉出比当前遍历元素大的元素，然后计算对应的矩形面积
         while (stack.length && heights[i] < height[stack[stack.length - 1]]) {
             const height = heights[stack.pop()]
-
             const left = stack.length ? stack[stack.length - 1] : -1
-
             const width = i - left - 1 // 多-1是因为当前i并不参与面积计算
-
             maxArea = Math.max(maxArea, width * height)
         }
         // i 比 栈口元素大的话， 直接入栈； 维护的是一个单调递增区间
         stack.push(i)
     }
-
     return maxArea
+
+    /**
+     * 手写实现： 要维护的是单调递增的栈，这样循环对象才能使用自己的高度
+     */
+    const stack = []
+    let maxArea = 0
+    heights.unshift(0)
+    heights.push(0)
+    const len = heights.length
+    
+    for(let i = 0; i < len; i++) {
+        while(stack.length && heights[i] < heights[stack[stack.length-1]]) {
+            const h = heights[stack.pop()]
+            const left = stack[stack.length-1]
+            const w = i - left - 1
+            maxArea = Math.max(maxArea, w * h)
+        }
+        stack.push(i)
+    }
+    return maxArea
+
 }
 
 /**
  * 42. 接雨水
  *
  * 给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
+ * 
+ * 输入：height = [0,1,0,2,1,0,1,3,2,1,2,1] 输出：6 
+ * 解释：上面是由数组 [0,1,0,2,1,0,1,3,2,1,2,1] 表示的高度图，在这种情况下，可以接 6 个单位的雨水（蓝色部分表示雨水）。
  *
  * @param {number[]} height
  * @return {number}
  */
 var trap = function (height) {
     /**
-     * 栈口记录高度
+     * 直觉反应就是：能接雨水的容量 = 找到数组中比它左右两边高的值，代表当前柱子的容量能被计算
+     * 那维护一个单调递减栈，如果遇到一个高的，那么将栈里面比他小的出战，但是这样的话，后面又有高的，新增的面积如何计算？矩形面积相加即可。
      */
 
     const stack = []
@@ -279,14 +296,16 @@ var trap = function (height) {
 
     const len = height.length
 
-    // 右边界要比左边高，才有可能蓄水； 而且要起码高一个距离
     for (let i = 0; i < len; i++) {
-        let useH
-        while (stack.length > 2 && height[i] >= height[stack[0]]) {
-            // 计算前面可用容量
-            useH = height[stack[0]]
-            capacity += useH - height[stack.pop()]
+
+        while(stack.length && height[i] > height[stack[stack.length-1]]) {
+            const prev = stack.pop
+            const h = height[stack[stack.length-1]] - height[prev]
+            const w = i - stack[stack.length-1] - 1
         }
+        
+
+
         stack.push(i)
     }
     return capacity
