@@ -71,8 +71,20 @@ var nextGreaterElement = function (nums1, nums2) {
  * @return {number[]}
  */
 var nextGreaterElements = function (nums) {
+    const stack = []
+    const len = nums.length
+    const ans = Array(len).fill(-1)
 
-	
+    for (let i = 0; i < len * 2; i++) {
+        while (stack.length && nums[i % len] > nums[stack[stack.length - 1]]) {
+            const index = stack.pop()
+            ans[index] = nums[i]
+        }
+        stack.push(i % len)
+        if (i > len) break
+    }
+
+    return ans
 }
 
 /**

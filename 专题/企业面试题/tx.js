@@ -260,26 +260,25 @@ var largestRectangleArea = function (heights) {
     heights.unshift(0)
     heights.push(0)
     const len = heights.length
-    
-    for(let i = 0; i < len; i++) {
-        while(stack.length && heights[i] < heights[stack[stack.length-1]]) {
+
+    for (let i = 0; i < len; i++) {
+        while (stack.length && heights[i] < heights[stack[stack.length - 1]]) {
             const h = heights[stack.pop()]
-            const left = stack[stack.length-1]
+            const left = stack[stack.length - 1]
             const w = i - left - 1
             maxArea = Math.max(maxArea, w * h)
         }
         stack.push(i)
     }
     return maxArea
-
 }
 
 /**
  * 42. 接雨水
  *
  * 给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。
- * 
- * 输入：height = [0,1,0,2,1,0,1,3,2,1,2,1] 输出：6 
+ *
+ * 输入：height = [0,1,0,2,1,0,1,3,2,1,2,1] 输出：6
  * 解释：上面是由数组 [0,1,0,2,1,0,1,3,2,1,2,1] 表示的高度图，在这种情况下，可以接 6 个单位的雨水（蓝色部分表示雨水）。
  *
  * @param {number[]} height
@@ -289,6 +288,11 @@ var trap = function (height) {
     /**
      * 直觉反应就是：能接雨水的容量 = 找到数组中比它左右两边高的值，代表当前柱子的容量能被计算
      * 那维护一个单调递减栈，如果遇到一个高的，那么将栈里面比他小的出战，但是这样的话，后面又有高的，新增的面积如何计算？矩形面积相加即可。
+     *
+     * 简单理解就是：遇到了更高的右边界，那么就计算左边栈内柱子的储水量
+     *
+     * 相加不行，相减是可以的； 先计算栈口元素的面积，然后出栈，再用下一个栈口的面积 - 当前出栈栈口的面积，就能获取到出栈柱子的容量?
+     * 不能直接用栈口来计算面积，会导致面积计算不准
      */
 
     const stack = []
@@ -297,15 +301,15 @@ var trap = function (height) {
     const len = height.length
 
     for (let i = 0; i < len; i++) {
-
-        while(stack.length && height[i] > height[stack[stack.length-1]]) {
-            const prev = stack.pop
-            const h = height[stack[stack.length-1]] - height[prev]
-            const w = i - stack[stack.length-1] - 1
+        let emptyCount = 0
+        while (stack.length && height[i] > height[stack[stack.length - 1]]) {
+            const prev = stack.pop() // 用掉的柱子出栈
+            if (stack.length) {
+                const h = Math.min(height[stack[stack.length - 1]], height[i]) - height[prev]
+                const w = i - stack[stack.length - 1] - 1
+                capacity += w * h
+            }
         }
-        
-
-
         stack.push(i)
     }
     return capacity

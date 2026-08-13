@@ -102,7 +102,7 @@ var maxEnvelopes = function (envelopes) {
      * 对于每一项，能累加的前提是： envelopes[0][1] > envelopes[1][1]
      *
      * 以下题解会超时，但是思路是对的
-     */
+     */*
     const n = envelopes.length
     if (n === 0) return 0
     envelopes.sort((a, b) => {
@@ -128,6 +128,68 @@ var maxEnvelopes = function (envelopes) {
 }
 
 /**
+ * 面试题 16.26. 计算器
+ *
+ * 给定一个包含正整数、加(+)、减(-)、乘(*)、除(/)的算数表达式(括号除外)，计算其结果
+ *
+ * 输入："3+22"  输出：7
+ *
+ * 表达式仅包含非负整数，+， - ，*，/ 四种运算符和空格  。 整数除法仅保留整数部分
+ *
+ * @param {string} s
+ * @return {number}
+ */
+var calculate = function (s) {
+    /**
+     * 设计思路：
+     * 1. 起始数据入库；
+     * 2. 遇到 + 放入累加数组；
+     * 3. 遇到 - 后续数字放入减法计算数组；
+     * 4. 遇到 * 处理左右两边有效数字
+     * 5. 遇到 / 处理左右两边数字
+     * 6. 遇到 空格 不处理
+     *
+     * 纯数字不处理，直到遇到下一个符号，下一个符号如果是+、-,那么保存当前的数字； 如果是 *,/ ，那么就继续遍历后序的纯数字
+     */
+
+    s.trim()
+
+    const len = s.length
+    const stack = []
+    let preCalc = '+'
+    let countStr = ''
+
+    for (let i = 0; i < len; i++) {
+        if (!isNaN(Number(s[i]))) {
+            countStr += s[i]
+        }
+        if (isNaN(Number(s[i])) || i === len - 1) {
+            const countNum = Number(countStr)
+            switch (preCalc) {
+                case '+':
+                    stack.push(countNum)
+                    break
+                case '-':
+                    stack.push(-countNum)
+                    break
+                case '*':
+                    stack.push(stack.pop() * countNum)
+                    break
+                default:
+                    stack.push(parseInt(stack.pop() / countNum))
+            }
+            preCalc = s[i]
+            countStr = ''
+        }
+    }
+    let ans = 0
+    while (stack.length) {
+        ans += stack.pop()
+    }
+    return ans
+}
+
+/**
  * 29. 两数相除
  * 给你两个整数，被除数 dividend 和除数 divisor。将两数相除，要求 不使用 乘法、除法和取余运算
  * 整数除法应该向零截断，也就是截去（truncate）其小数部分。例如，8.345 将被截断为 8 ，-2.7335 将被截断至 -2
@@ -142,19 +204,51 @@ var divide = function (dividend, divisor) {
     /**
      * 会超时
      */
-    let count = 0
-    let resetNum = Math.abs(dividend)
-    const flag = (divisor > 0 && dividend > 0) || (divisor < 0 && dividend < 0)
+    // let count = 0
+    // let resetNum = Math.abs(dividend)
+    // const flag = (divisor > 0 && dividend > 0) || (divisor < 0 && dividend < 0)
 
-    const cutStep = Math.abs(divisor)
-    while (resetNum >= cutStep) {
-        resetNum -= cutStep
-        count++
+    // const cutStep = Math.abs(divisor)
+    // while (resetNum >= cutStep) {
+    //     resetNum -= cutStep
+    //     count++
+    // }
+    // if (count >= Math.pow(2, 31)) {
+    //     count = Math.pow(2, 31) - 1
+    // }
+    // return flag ? count : -count
+
+    // 溢出特殊情况
+    if (dividend === -2147483648 && divisor === -1) {
+        return 2147483647
     }
-    if (count >= Math.pow(2, 31)) {
-        count = Math.pow(2, 31) - 1
+
+    const negative = dividend < 0 !== divisor < 0
+
+    let a = Math.abs(dividend)
+    let b = Math.abs(divisor)
+
+    let result = 0
+
+    while(a >= b) {
+        let value = b
+        let count = 1
+
+        // 倍增来计算，其实就是变相用乘法计算差值； 当count =1, 如果 a >= b + b; count += count; 1+=1; 接着b翻倍，如果还是满足，那么 count 跟着翻倍，也就是 count += count
+        while(a >= value + value) {
+            // 每一轮，先用倍增找到“当前能减掉的最大块”，然后一次减掉这一大块。 其实就是 a / b >= 2; 类似二进制构造商： a >= 2value, 两边/value: a / value >= 2
+            value +=value
+            count += count
+        }
+
+        a -= value
+        result += count
+
     }
-    return flag ? count : -count
+
+    return negative ? - result : result
+
+
 }
 
 /**
@@ -176,23 +270,23 @@ var divide = function (dividend, divisor) {
 var jump = function (nums) {
     /**
      * 在索引 i 处，你可以跳转到任意 (i + j) 处
-     * 
+     *
      * 1. 返回到达 n-1 的最小跳跃数
      * [2,3,1,1,4]  ->  [2, 4, 3, 4, 8]
-     * 
-     * 对于nums[i]: 可以选择踩上去，也可以选择跳过去
-     * dp[i][0]: 不踩= 
      *
-     *    0  1  2  3  4  5  6   
-     * 0  0  1  1  2  
-     * 2  
-     * 3  
+     * 对于nums[i]: 可以选择踩上去，也可以选择跳过去
+     * dp[i][0]: 不踩=
+     *
+     *    0  1  2  3  4  5  6
+     * 0  0  1  1  2
+     * 2
+     * 3
      * 1
      * 1
      * 4
-     * 
-     * nums[i] 
-     * 
+     *
+     * nums[i]
+     *
      */
     const stepMap = new Map()
     const n = nums.length
