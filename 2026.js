@@ -274,6 +274,48 @@ var divide = function (dividend, divisor) {
 }
 
 /**
+ * 55. 跳跃游戏
+ *
+ * 输入：nums = [2,3,1,1,4] 输出：true
+ * 解释：可以先跳 1 步，从下标 0 到达下标 1, 然后再从下标 1 跳 3 步到达最后一个下标。
+ *
+ * 数组中的每个元素代表你在该位置可以跳跃的最大长度。
+ *
+ * @param {number[]} nums
+ * @return {boolean}
+ */
+var canJump = function (nums) {
+    /**
+     * 1. 动态规划： dp[i]表示当前跳完还剩的最大步数
+     */
+    const len = nums.length
+    const dp = Array(len).fill(false)
+    dp[0] = true
+
+    for (let i = 1; i < len; i++) {
+        for (let j = 0; j < i; j++) {
+            if (dp[j] && j + nums[j] >= i) {
+                dp[i] = true
+                break
+            }
+        }
+    }
+    return dp[len - 1]
+
+    /**
+     * 2. 贪心算法，每次更新能跳到的最远下标
+     */
+    let maxRightPos = 0
+    const len = nums.length
+    for (let i = 0; i < len; i++) {
+        if (i <= maxRightPos) {
+            maxRightPos = Math.max(maxRightPos, nums[i] + i)
+        }
+    }
+    return maxRightPos >= len - 1
+}
+
+/**
  * 45. 跳跃游戏 II
  *
  * 给定一个长度为 n 的 0 索引整数数组 nums。初始位置在下标 0。
@@ -290,29 +332,22 @@ var divide = function (dividend, divisor) {
  * @return {number}
  */
 var jump = function (nums) {
-    /**
-     * 在索引 i 处，你可以跳转到任意 (i + j) 处
-     *
-     * 1. 返回到达 n-1 的最小跳跃数
-     * [2,3,1,1,4]  ->  [2, 4, 3, 4, 8]
-     *
-     * 对于nums[i]: 可以选择踩上去，也可以选择跳过去
-     * dp[i][0]: 不踩=
-     *
-     *    0  1  2  3  4  5  6
-     * 0  0  1  1  2
-     * 2
-     * 3
-     * 1
-     * 1
-     * 4
-     *
-     * nums[i]
-     *
-     */
-    const stepMap = new Map()
-    const n = nums.length
-    for (let i = 0; i < n; i++) {
-        const step = nums[i] + i
+    const len = nums.length
+
+    let end = 0
+
+    let farthest = 0
+
+    let jumpCount = 0
+
+    // 其实就是找出跳跃区间[i...end]之间能跳出的最远距离，然后更新最远距离，更新步数；
+    // 所以起始 i === end; i跳完后，end到达最远距离；此时递增i；i在中间跳跃过程中，一直调到i本身，如果中间有跳的更远的，对比之后，更新end，更新最远距离
+    for (let i = 0; i < len - 1; i++) {
+        farthest = Math.max(i + nums[i], farthest)
+        if (end === i) {
+            jumpCount++ // 从 end起跳
+            end = farthest // 更新end的下标
+        }
     }
+    return jumpCount
 }
