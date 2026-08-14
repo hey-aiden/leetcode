@@ -102,7 +102,7 @@ var maxEnvelopes = function (envelopes) {
      * 对于每一项，能累加的前提是： envelopes[0][1] > envelopes[1][1]
      *
      * 以下题解会超时，但是思路是对的
-     */*
+     */
     const n = envelopes.length
     if (n === 0) return 0
     envelopes.sort((a, b) => {
@@ -125,6 +125,31 @@ var maxEnvelopes = function (envelopes) {
         ans = Math.max(ans, f[i])
     }
     return ans
+
+    // 二分
+    envelopes.sort((a, b) => {
+        if (a[0] === b[0]) {
+            // 宽度一样，需要按照高度倒序
+            return b[1] - a[1]
+        } else {
+            return a[0] - b[0]
+        }
+    })
+    const dp = []
+    for (const [w, h] of envelopes) {
+        let left = 0,
+            right = dp.length
+        while (left < right) {
+            const mid = Math.floor((left + right) / 2)
+            if (dp[mid] >= h) {
+                right = mid
+            } else {
+                left = mid + 1
+            }
+        }
+        d[left] = h
+    }
+    return dp.length
 }
 
 /**
@@ -230,25 +255,22 @@ var divide = function (dividend, divisor) {
 
     let result = 0
 
-    while(a >= b) {
+    while (a >= b) {
         let value = b
         let count = 1
 
         // 倍增来计算，其实就是变相用乘法计算差值； 当count =1, 如果 a >= b + b; count += count; 1+=1; 接着b翻倍，如果还是满足，那么 count 跟着翻倍，也就是 count += count
-        while(a >= value + value) {
+        while (a >= value + value) {
             // 每一轮，先用倍增找到“当前能减掉的最大块”，然后一次减掉这一大块。 其实就是 a / b >= 2; 类似二进制构造商： a >= 2value, 两边/value: a / value >= 2
-            value +=value
+            value += value
             count += count
         }
 
         a -= value
         result += count
-
     }
 
-    return negative ? - result : result
-
-
+    return negative ? -result : result
 }
 
 /**
