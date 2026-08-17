@@ -1016,3 +1016,248 @@ var missingNumber = function (arr) {
 
     return arr[0] + left * dif
 }
+
+/**
+ * 311. 稀疏矩阵的乘法
+ * 给定两个 稀疏矩阵 ：大小为 m x k 的稀疏矩阵 mat1 和大小为 k x n 的稀疏矩阵 mat2 ，返回 mat1 x mat2 的结果。你可以假设乘法总是可能的
+ * @param {number[][]} mat1
+ * @param {number[][]} mat2
+ * @return {number[][]}
+ */
+var multiply = function (mat1, mat2) {
+    /**
+     * 矩阵乘法 -》 向量计算； 假设有矩阵：
+     * a1  a2  a3         c1   c2   c3                a1*c1+a2*c4+a3*c7   a1*c2+a2*c5+a3*c8  a1*c3+a2*c6+a3*c9
+     *
+     * b1  b2  b3         c4   c5   c6    =>          b1*c1++b1*c4+b1*c7  b1*c2+b1*c5+ba*c8  b1*c3+b1*c6+b1*c9
+     *
+     *                    c7   c8   c9
+     *
+     * 核心就是满足 mRow X nCol 的矩阵 A 与 nRow X kCol 的矩阵 B，计算公式 = mRow x kCol 取得每条向量的乘机和； 要满足 矩阵AnCol = nRow矩阵B
+     */
+
+    const rowLen = mat1.length
+    const colLen = mat2[0].length
+    const row2 = mat2.length
+
+    // const res = Array(rowLen).fill([]) // 这里会有数组引用问题
+    const res = Array(rowLen)
+
+    for (let i = 0; i < rowLen; i++) {
+        let ans = []
+        const rowList = mat1[i]
+        for (let j = 0; j < colLen; j++) {
+            let sum = 0
+            let index = 0
+            for (const rowNum of mat2) {
+                sum = rowList[index] * rowNum[j] + sum
+                index++
+            }
+            ans.push(sum)
+        }
+        res[i] = ans
+    }
+    return res
+}
+
+/**
+ * 723. 粉碎糖果
+ * 这个问题是实现一个简单的消除算法
+ * 给定一个 m x n 的二维整数数组 board 代表糖果所在的方格，不同的正整数 board[i][j] 代表不同种类的糖果，如果 board[i][j] == 0 代表 (i, j) 这个位置是空的。
+ *
+ * 给定的方格是玩家移动后的游戏状态，现在需要你根据以下规则粉碎糖果，使得整个方格处于稳定状态并最终输出：
+ * 1. 如果有三个及以上水平或者垂直相连的同种糖果，同一时间将它们粉碎，即将这些位置变成空的
+ * 2. 在同时粉碎掉这些糖果之后，如果有一个空的位置上方还有糖果，那么上方的糖果就会下落直到碰到下方的糖果或者底部，这些糖果都是同时下落，也不会有新的糖果从顶部出现并落下来
+ * 3. 通过前两步的操作，可能又会出现可以粉碎的糖果，请继续重复前面的操作
+ * 4. 当不存在可以粉碎的糖果，也就是状态稳定之后，请输出最终的状态
+ * 你需要模拟上述规则并使整个方格达到稳定状态，并输出
+ * @param {number[][]} board
+ * @return {number[][]}
+ */
+var candyCrush = function (board) {
+    /**
+     * 1. 找到三个及以上、水平或者垂直相连的值相同的糖果； 然后置为0；
+     * 2. 从上往下，填充已经置为0的糖果；
+     */
+
+    const row = board.length
+    const col = board[0].length
+
+    // 粉碎糖果函数 - 从下往上，从左往右
+    function loopCandy() {
+        let useList = []
+        for (let i = row - 1; i >= 0; i--) {
+            for (let j = 0; j < col; j++) {
+                if (board[i][j] === 0) continue
+                let res = searchCandy(i, j)
+                useList.push(...res)
+            }
+        }
+        setCandy(useList)
+        return useList.length
+    }
+
+    function searchCandy(r, c) {
+        let setList = []
+        let baseCandy = board[r][c]
+        // 横向寻找，查找重复项
+        let colCount = 0,
+            right = c + 1
+        while (right < col && board[r][right] === baseCandy) {
+            colCount++
+            right++
+        }
+
+        // 竖向比较
+        let rowCount = 0,
+            top = r - 1,
+            bottom = r + 1
+        while (top >= 0 && board[top][c] === baseCandy) {
+            top--
+            rowCount++
+        }
+
+        // 将符合条件的节点置为0 - 先不着急改为0
+        if (rowCount >= 2 || colCount >= 2) {
+            setList.push([r, c])
+            if (colCount >= 2) {
+                let right = c + 1
+                while (colCount > 0) {
+                    setList.push([r, right])
+                    colCount--
+                    right++
+                }
+            }
+            if (rowCount >= 2) {
+                let top = r - 1
+                while (rowCount > 0) {
+                    board[top][c] = 0
+                    setList.push([top, c])
+                    rowCount--
+                    top--
+                }
+            }
+            console.log(setList)
+            return setList
+        }
+        return []
+    }
+
+    function setCandy(list) {
+        for (const [r, c] of list) {
+            board[r][c] = 0
+        }
+    }
+
+    function findCandy() {
+        for (let i = row - 1; i >= 0; i--) {
+            for (let j = 0; j < col; j++) {
+                if (board[i][j] === 0) {
+                    moveCandy(i, j)
+                }
+            }
+        }
+    }
+
+    // 从上往下填空位
+    function moveCandy(r, c) {
+        let top = r - 1
+        while (top >= 0) {
+            if (board[top][c]) {
+                board[r][c] = board[top][c]
+                board[top][c] = 0
+                break
+            }
+            top--
+        }
+    }
+    while (loopCandy()) {
+        findCandy()
+    }
+    return board
+}
+candyCrush([
+    [2, 1, 3],
+    [2, 2, 2],
+    [2, 2, 2],
+])
+
+/**
+ * 253. 会议室 II
+ *
+ * 给你一个会议时间安排的数组 intervals ，每个会议时间都会包括开始和结束的时间 intervals[i] = [starti, endi] ，
+ * 返回 所需会议室的最小数量
+ *
+ * 输入：intervals = [[0,30],[5,10],[15,20]] 输出：2
+ *
+ * @param {number[][]} intervals
+ * @return {number}
+ */
+var minMeetingRooms = function (intervals) {
+    /**
+     * 用小顶堆构造优先队列， 在小顶堆中，用结束时间作为键，在遍历过程中，如果遇到开始时间>=栈口结束时间的，直接替换重新分配会议室；
+     * 如果开始时间 < 栈口结束时间，那么意味着需要更多会议室
+     *
+     * 队列里面存的是结束时间
+     */
+    intervals.sort((a, b) => a[0] - b[0])
+    class Heap {
+        constructor(compareFn) {
+            this.queue = []
+            this.compareFn = compareFn
+        }
+        size() {
+            return this.queue.length
+        }
+        compare(index1, index2) {
+            if (index1 >= this.size()) return 1
+            if (index2 >= this.size()) return -1
+            return this.compareFn(this.queue[index1], this.queue[index2])
+        }
+        push(item) {
+            this.queue.push(item)
+            let index = this.size() - 1
+            let parent = Math.floor((index - 1) / 2)
+            while (parent >= 0 && this.compare(parent, index) > 0) {
+                ;[this.queue[index], this.queue[parent]] = [this.queue[parent], this.queue[index]]
+                index = parent
+                parent = Math.floor((index - 1) / 2)
+            }
+        }
+        pop() {
+            if (this.size() <= 1) {
+                return this.queue.pop()
+            }
+            const out = this.queue[0]
+            this.queue[0] = this.queue.pop()
+            let index = 0,
+                left = 2 * index + 1,
+                searchChild = this.compare(left, left + 1) > 0 ? left + 1 : left
+            while (this.compare(index, searchChild) > 0) {
+                ;[this.queue[searchChild], this.queue[index]] = [this.queue[index], this.queue[searchChild]]
+                index = searchChild
+                left = index * 2 + 1
+                searchChild = this.compare(left, left + 1) > 0 ? left + 1 : left
+            }
+            return out
+        }
+        front() {
+            return this.queue[0]
+        }
+    }
+
+    const heap = new Heap((a, b) => a - b)
+
+    const len = intervals.length
+
+    heap.push(intervals[0][1])
+
+    for (let i = 1; i < len; i++) {
+        if (intervals[i][0] >= heap.front()) {
+            heap.pop()
+        }
+        heap.push(intervals[i][1])
+    }
+
+    return heap.size()
+}
