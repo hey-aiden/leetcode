@@ -1261,3 +1261,230 @@ var minMeetingRooms = function (intervals) {
 
     return heap.size()
 }
+
+/**
+ * 616. 给字符串添加加粗标签
+ *
+ * 给定字符串 s 和字符串数组 words。
+ * 对于 s 内部的子字符串，若其存在于 words 数组中， 则通过添加闭合的粗体标签 <b> 和 </b> 进行加粗标记
+ * 1. 如果两个这样的子字符串重叠，你应该仅使用一对闭合的粗体标签将它们包围起来
+ * 2. 如果被粗体标签包围的两个子字符串是连续的，你应该将它们合并
+ * 返回添加加粗标签后的字符串 s
+ *
+ * 输入： s = "abcxyz123", words = ["abc","123"]
+ * 输出："<b>abc</b>xyz<b>123</b>"
+ * 解释：两个单词字符串是 s 的子字符串，如下所示: "abcxyz123"。 我们在每个子字符串之前添加<b>，在每个子字符串之后添加</b>。
+ *
+ * 输入：s = "aaabbb", words = ["aa","b"]
+ * 输出："<b>aaabbb</b>"
+ * 解释： "aa"作为子字符串出现了两次: "aaabbb" 和 "aaabbb"。 "b"作为子字符串出现了三次: "aaabbb"、"aaabbb" 和 "aaabbb"。 我们在每个子字符串之前添加<b>，在每个子字符串之后添加</b>: "<b>a<b>a</b>a</b><b>b</b><b>b</b><b>b</b>"。 由于前两个<b>重叠，把它们合并得到: "<b>aaa</b><b>b</b><b>b</b><b>b</b>"。 由于现在这四个<b>是连续的，把它们合并得到: "<b>aaabbb</b>"。
+ *
+ * @param {string} s
+ * @param {string[]} words
+ * @return {string}
+ */
+var addBoldTag = function (s, words) {
+    /**
+     * 滑动窗口吗：
+     * 1. 窗口里的值
+     * 2. 当前检查的值 -> 检查为有效字符 - 增加标签 -
+     *
+     *
+     * 准确思路： 合并字符串区间 - 找到所有满足 words 字符的下标，最终将所有的下标合并，合并后的字符用br拼接，最终输出完整的字符串
+     * 反向匹配：遍历words，看看每一个words在字符串s的下标区间
+     */
+    const intervals = [] // 收集所有的下标区间
+
+    for (const word of words) {
+        let start = s.indexOf(word)
+
+        while (start >= 0) {
+            intervals.push([start, start + word.length])
+            // 继续往后匹配，从当前start+1开始，来解决重叠问题
+            start = s.indexOf(word, start + 1)
+        }
+    }
+
+    if (intervals.length === 0) return s // 说明没有有效区间
+
+    // 开始合并区间 [0,1][1,2][3,5][7,8][9,15][12,18] -> [0,2][3,5][7,8][9,18]
+    intervals.sort((a, b) => a[0] - b[0])
+    const merge = []
+    let [prevStart, prevEnd] = intervals[0]
+    const len = intervals.length
+    for (let i = 1; i < len; i++) {
+        const [start, end] = intervals[i]
+        if (start <= prevEnd) {
+            // 在合并区间, 扩大区间
+            prevEnd = Math.max(end, prevEnd)
+        } else {
+            // 新开区间，记录之前的区间
+            merge.push([prevStart, prevEnd])
+            prevStart = start
+            prevEnd = end
+        }
+    }
+    merge.push([prevStart, prevEnd])
+
+    // 用栈合并区间也可以
+    // intervals.sort((a, b) => a[0] - b[0])
+    // console.log(intervals)
+    // const mergeStack = []
+    // for (const [start, end] of intervals) {
+    //     if (mergeStack.length && start <= mergeStack[mergeStack.length - 1][1]) {
+    //         const [prevStart, prevEnd] = mergeStack.pop()
+    //         const newEnd = Math.max(prevEnd, end)
+    //         mergeStack.push([prevStart, newEnd])
+    //     } else {
+    //         mergeStack.push([start, end])
+    //     }
+    // }
+
+    // 基于区间构造字符串
+    let prev = 0
+    const res = []
+    for (const [start, end] of merge) {
+        res.push(s.slice(prev, start))
+        res.push('<b>')
+        res.push(s.slice(start, end))
+        res.push('</b>')
+
+        prev = end
+    }
+    res.push(s.slice(prev))
+
+    return res.join('')
+}
+
+/**
+ * 1272. 删除区间
+ *
+ * 实数集合可以表示为若干不相交区间的并集，其中每个区间的形式为 [a, b)（左闭右开），表示满足 a <= x < b 的所有实数  x 的集合
+ * 如果某个区间 [a, b) 中包含实数 x ，则称实数 x 在集合中。
+ *
+ * 给你一个 有序的 不相交区间列表 intervals：intervals 表示一个实数集合，其中每一项 intervals[i] = [ai, bi] 都表示一个区间 [ai, bi)
+ *
+ * 再给你一个要删除的区间 toBeRemoved：返回 一组实数，该实数表示intervals 中 删除 了 toBeRemoved 的部分
+ *
+ * 返回实数集合，并满足集合中的每个实数 x 都在 intervals 中，但不在 toBeRemoved 中
+ *
+ * 输入：intervals = [[0,2],[3,4],[5,7]], toBeRemoved = [1,6] 输出：[[0,1],[6,7]]
+ *
+ * @param {number[][]} intervals
+ * @param {number[]} toBeRemoved
+ * @return {number[][]}
+ */
+var removeInterval = function (intervals, toBeRemoved) {
+    /**
+     * 产生交集的地方：
+     * 1.[rmStart, rmEnd] -> rmStart > end;   rmEnd > start
+     */
+    const len = intervals.length
+    const res = []
+    const [rmStart, rmEnd] = toBeRemoved
+    for (let i = 0; i < len; i++) {
+        const [start, end] = intervals[i]
+        // 判断当前区间是否有效
+        if (end <= rmStart || start >= rmEnd) {
+            res.push([start, end])
+        } else if (start < rmStart && end > rmEnd) {
+            res.push([start, rmStart])
+            res.push([rmEnd, end])
+        } else if (end > rmEnd) {
+            res.push([rmEnd, end])
+        } else if (start < rmStart) {
+            res.push([start, rmStart])
+        }
+    }
+    return res
+}
+
+/**
+ * 1086. 前五科的均分
+ * @param {number[][]} items
+ * @return {number[][]}
+ */
+var highFive = function (items) {
+    const userMap = new Map()
+
+    for (const [id, num] of items) {
+        if (!userMap.has(id)) {
+            userMap.set(id, [])
+        }
+        userMap.get(id).push(num)
+    }
+
+    const res = []
+
+    for (const [id, numList] of userMap.entries()) {
+        numList.sort((a, b) => a - b)
+        let total = 0
+        for (let i = 0; i <= 4; i++) {
+            total += numList[i]
+        }
+        res.push([id, total / 5])
+    }
+
+    return res
+}
+
+/**
+ * 1134. 阿姆斯特朗数
+ *
+ * 给你一个整数 n ，让你来判定他是否是 阿姆斯特朗数，是则返回 true，不是则返回 false
+ *
+ * 假设存在一个 k 位数 n ，其每一位上的数字的 k 次幂的总和也是 n ，那么这个数是阿姆斯特朗数
+ *
+ * 输入：n = 153 输出：true 解释： 153 是一个 3 位数，且 153 = 1^3 + 5^3 + 3^3。
+ *
+ * @param {number} n
+ * @return {boolean}
+ */
+var isArmstrong = function (n) {
+    const numStr = n + ''
+    const len = numStr.length
+    let sum = 0
+    for (const num of numStr) {
+        const nums = Number(num)
+        let loop = len
+        let count = 1
+        while (loop > 0) {
+            count = count * count
+            loop--
+        }
+        sum += count
+    }
+    return sum === n
+}
+
+/**
+ * 1180. 统计只含单一字母的子串
+ *
+ * 给你一个字符串 s，返回 只含 单一字母 的子串个数
+ *
+ * 输入： s = "aaaba" 输出： 8
+ * 解释： 只含单一字母的子串分别是 "aaa"， "aa"， "a"， "b"。
+ *  "aaa" 出现 1 次。 "aa" 出现 2 次。 "a" 出现 4 次。 "b" 出现 1 次。 所以答案是 1 + 2 + 4 + 1 = 8。
+ *
+ * @param {string} s
+ * @return {number}
+ */
+var countLetters = function (s) {
+    /**
+     * 1. 统计所有单字符对应的个数； ❌ 要求得是子串，并不是子序列
+     * 2. 如果某个字符的个数为n(n>1),
+     * 3. 遍历元素，如果当前元素与前面的元素匹配，每匹配一次，统计数+1
+     */
+    const start = s[0]
+    let len = s.length
+    let count = 1
+    for (let i = 1; i < len; i++) {
+        count++
+        let right = i - 1
+        while (right >= 0 && s[right] === s[i]) {
+            count++
+            right--
+        }
+    }
+    return count
+}
