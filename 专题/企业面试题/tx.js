@@ -314,3 +314,237 @@ var trap = function (height) {
     }
     return capacity
 }
+
+/**
+ * 3925. 连接逆序数组
+ *
+ * 给你一个长度为 n 的整数数组 nums,构造一个新的长度为 2 * n 的数组 ans，其中前 n 个元素与 nums 相同，后 n 个元素为 nums 的逆序
+ * 具体而言，对于 0 <= i <= n - 1：
+ * ans[i] = nums[i]
+ * ans[i + n] = nums[n - i - 1]
+ * 返回整数数组 ans
+ *
+ * @param {number[]} nums
+ * @return {number[]}
+ */
+var concatWithReverse = function (nums) {
+    if (nums.length === 0) return []
+
+    /**
+     * 纯 API 解法
+     */
+    const len = nums.length
+    const ans = nums.slice()
+    ans.reverse()
+    return [...nums, ...ans]
+
+    /**
+     * 一次遍历
+     */
+    const len = nums.length
+    const ans = Array(2 * len)
+    for (let i = 0; i < len; i++) {
+        ans[i] = nums[i]
+        ans[i + len] = nums[len - i - 1]
+    }
+    return ans
+}
+
+/**
+ * 967. 连续差相同的数字
+ *
+ * 返回所有长度为 n 且满足其每两个连续位上的数字之间的差的绝对值为 k 的 非负整数
+ *
+ * 请注意，除了 数字 0 本身之外，答案中的每个数字都 不能 有前导零。例如，01 有一个前导零，所以是无效的；但 0 是有效的
+ *
+ * 输入：n = 3, k = 7  输出：[181,292,707,818,929]
+ * 差值k是进位差，比如： 1 8 1  -》  1 + 7  = 8   8 - 7 = 1； 所以要满足的是：每两个连续位上的数字之间的差的绝对值为 k
+ * 解释：注意，070 不是一个有效的数字，因为它有前导零。
+ *
+ * @param {number} n
+ * @param {number} k
+ * @return {number[]}
+ */
+var numsSameConsecDiff = function (n, k) {
+    let res = new Set()
+    /**
+     *
+     * @param {*} str 当前已使用的字符位数，如果 = n，则可以使用
+     * @param {*} num 当前轮使用的数字
+     * @returns
+     */
+    function dfs(str, num) {
+        if (num < 0 || num > 9) return
+        if (str.length === n) {
+            // 收货的季节
+            res.add(Number(str))
+            return
+        }
+        str = str + num
+        // 它的下一位： 2  + 4    2 - 4     5 + 5   5 - 4
+        dfs(str, num + k)
+        dfs(str, num - k)
+    }
+
+    for (let i = 1; i <= 9; i++) {
+        // 从 1 开始累加 进位, 因为是绝对值，所以也可以是降位
+        dfs('', i)
+    }
+
+    return Array.from(res)
+}
+
+/**
+ *
+ * 394. 字符串解码  给定一个经过编码的字符串，返回它解码后的字符串
+ *
+ * 编码规则为: k[encoded_string]，表示其中方括号内部的 encoded_string 正好重复 k 次。注意 k 保证为正整数
+ *
+ * 你可以认为输入字符串总是有效的；输入字符串中没有额外的空格，且输入的方括号总是符合格式要求的
+ *
+ * 此外，你可以认为原始数据不包含数字，所有的数字只表示重复的次数 k ，例如不会出现像 3a 或 2[4] 的输入
+ *
+ * 输入：s = "3[a]2[bc]" 输出："aaabcbc"
+ * 输入：s = "3[a2[c]]" 输出："accaccacc"  3 ]a  2] c   ] ]
+ * 输入：s = "abc3[cd]xyz" 输出："abccdcdcdxyz" a b c 3 ] c d ] x y z
+ *
+ * @param {string} s
+ * @return {string}
+ */
+var decodeString = function (s) {
+    /**
+     * 栈处理：
+     * 3[a]2[bc]
+     *
+     * char === num  入栈
+     * char === '['  入栈 ]
+     * char === [a-z]  保存
+     *
+     */
+    const strStack = []
+    const countStack = []
+    let res = ''
+    let handleSemi = false
+
+    function generateStr() {
+        let str = ''
+        while (strStack[strStack.length - 1] !== ']') {
+            str = strStack.pop() + str
+        }
+        strStack.pop() // 将 ] 出栈
+        let count = countStack.pop()
+        let newStr = ''
+        while (count > 0) {
+            newStr = newStr + str
+            count--
+        }
+        return newStr
+    }
+
+    let right = 0
+    const len = s.length
+    while (right < len) {
+        const char = s[right]
+        if (char === '[') {
+            strStack.push(']')
+        } else if (char === ']') {
+            // 处理栈内数据
+            str = generateStr()
+            if (countStack.length) {
+                strStack.push(str)
+            } else {
+                res += str
+            }
+        } else if (!isNaN(Number(char))) {
+            // 这里要看前一个str是否也是number
+            let numStr = char
+            while (!isNaN(Number(s[right + 1]))) {
+                numStr = numStr + s[right + 1]
+                right++
+            }
+            countStack.push(Number(numStr))
+        } else {
+            // 纯字母
+            if (countStack.length) {
+                strStack.push(char)
+            } else {
+                res = res + char
+            }
+        }
+        right++
+    }
+
+    return res
+}
+
+/**
+ * 1048. 最长字符串链
+ *
+ * 给出一个单词数组 words ，其中每个单词都由小写英文字母组成
+ *
+ * 如果我们可以 不改变其他字符的顺序 ，在 wordA 的任何地方添加 恰好一个 字母使其变成 wordB ，那么我们认为 wordA 是 wordB 的 前身
+ * 例如，"abc" 是 "abac" 的 前身 ，而 "cba" 不是 "bcad" 的 前身
+ *
+ * 从给定单词列表 words 中选择单词组成词链，返回 词链的 最长可能长度
+ *
+ * 输入：words = ["a","b","ba","bca","bda","bdca"] 输出：4
+ * 解释：最长单词链之一为 ["a","ba","bda","bdca"]
+ *
+ * @param {string[]} words
+ * @return {number}
+ */
+var longestStrChain = function (words) {
+    words.sort((a, b) => a.length - b.length)
+    const wordMap = new Map()
+
+    let res = -Infinity
+
+    for (const word of words) {
+        wordMap.set(word, 1)
+
+        const len = word.length
+        for (let i = 0; i < len; i++) {
+            const prev = word.substring(0, i) + word.substring(i + 1)
+            if (wordMap.has(prev)) {
+                wordMap.set(word, Math.max(wordMap.get(word), wordMap.get(prev) + 1))
+            }
+        }
+
+        res = Math.max(res, wordMap.get(word))
+    }
+
+    return res
+}
+
+/**
+ * 80. 删除有序数组中的重复项 II
+ * 
+ * 给你一个有序数组 nums ，请你 原地 删除重复出现的元素，使得出现次数超过两次的元素只出现两次 ，返回删除后数组的新长度
+ * 
+ * 不要使用额外的数组空间，你必须在 原地 修改输入数组 并在使用 O(1) 额外空间的条件下完成。
+ * 
+/**
+ * @param {number[]} nums
+ * @return {number}
+ */
+var removeDuplicates = function (nums) {
+    const len = nums.length
+
+    if (len <= 2) return len
+
+    let left = 1,
+        right = 2
+    while (right < len) {
+        if (nums[right] === nums[left] && nums[left] === nums[left - 1]) {
+            right++
+            while (nums[right] === nums[left]) {
+                right++
+            }
+            if (right >= len) break
+        }
+        left++
+        nums[left] = nums[right]
+        right++
+    }
+    return left + 1
+}
