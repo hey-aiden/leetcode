@@ -548,3 +548,33 @@ var removeDuplicates = function (nums) {
     }
     return left + 1
 }
+
+/**
+ * 2625. 扁平化嵌套数组
+ *
+ * 数组 扁平化 是对数组的一种操作，定义是将原数组部分或全部子数组删除，并替换为该子数组中的实际元素。
+ * 只有当嵌套的数组深度小于 n 时，才应该执行扁平化操作。
+ *
+ * 第一层数组中元素的深度被认为是 0
+ *
+ * @param {Array} arr
+ * @param {number} depth
+ * @return {Array}
+ */
+var flat = function (arr, n) {
+    let res = []
+
+    function openArr(list, deep) {
+        for (const item of list) {
+            if (Array.isArray(item) && deep < n) {
+                openArr(item, deep + 1)
+            } else {
+                res.push(item)
+            }
+        }
+    }
+
+    openArr(arr, 0)
+
+    return res
+}

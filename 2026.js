@@ -351,3 +351,123 @@ var jump = function (nums) {
     }
     return jumpCount
 }
+
+/**
+ * 969. 煎饼排序
+ *
+ * 给你一个整数数组 arr ，请使用 煎饼翻转 完成对数组的排序
+ *
+ * 一次煎饼翻转的执行过程如下：
+ * 选择一个整数 k ，1 <= k <= arr.length 反转子数组 arr[0...k-1]（下标从 0 开始）
+ * 例如，arr = [3,2,1,4] ，选择 k = 3 进行一次煎饼翻转，反转子数组 [3,2,1] ，得到 arr = [1,2,3,4] 。
+ *
+ * 输入：[3,2,4,1] 输出：[4,2,4,3]
+ * 解释： 我们执行 4 次煎饼翻转，k 值分别为 4，2，4，和 3。
+ * 初始状态 arr = [3, 2, 4, 1]
+ * 第一次翻转后（k = 4）：arr = [1, 4, 2, 3]
+ * 第二次翻转后（k = 2）：arr = [4, 1, 2, 3]
+ * 第三次翻转后（k = 4）：arr = [3, 2, 1, 4]
+ * 第四次翻转后（k = 3）：arr = [1, 2, 3, 4]，此时已完成排序。
+ *
+ * @param {number[]} arr
+ * @return {number[]}
+ */
+var pancakeSort = function (arr) {
+    /**
+     * 因为翻转逻辑是： 翻转 0...k-1的数组，所以：
+     * 1. 头尾比较 - 如果尾部<头部,那么说明直接整个数组翻转；
+     * 2.           头比尾部小，向后遍历，如果碰到比尾部还大的，那么翻转到头部，然后再换到尾部
+     *
+     */
+    const ans = []
+
+    function cook(n) {
+        if (n === 1) return
+        // 找到最大下标
+        let max = 0
+        for (let i = 1; i < n; i++) {
+            if (arr[i] > arr[max]) {
+                max = i
+            }
+        }
+
+        reverse(0, max)
+        ans.push(max + 1)
+        reverse(0, n - 1)
+        ans.push(n)
+
+        cook(n - 1)
+    }
+
+    function reverse(l, r) {
+        while (l < r) {
+            ;[arr[r], arr[l]] = [arr[l], arr[r]]
+            l++
+            r--
+        }
+    }
+
+    cook(arr.length)
+
+    return ans
+}
+
+/**
+ * LCR 010. 和为 K 的子数组
+ *
+ * 给定一个整数数组和一个整数 k ，请找到该数组中和为 k 的连续子数组的个数
+ *
+ * 输入:nums = [1,1,1], k = 2 输出: 2 解释: 此题 [1,1] 与 [1,1] 为两种不同的情况
+ *
+ * @param {number[]} nums
+ * @param {number} k
+ * @return {number}
+ */
+var subarraySum = function (nums, k) {
+    /**
+     * 题目求得是和为K的连续子数组个数
+     *   1 2 3 4
+     * 0 1 3 6 10
+     *
+     * 前缀和的思想是： 1. 计算在下标 i 时，前面[0...i-1]个元素的总和； 之后再遍历下标，
+     */
+    let count = 0
+    const len = nums.length
+    const sum = []
+    sum[0] = 0
+    for (let i = 0; i < len; i++) {
+        sum[i + 1] = nums[i] + sum[i]
+    }
+    for (let i = 0; i < len; i++) {
+        for (let j = 0; j < i; j++) {
+            if (sum[i] - sum[j] === k) {
+                count++
+            }
+        }
+    }
+    return count
+
+    /**
+     * 一次遍历，更新前缀和的时候，更新目标数;
+     * 其实就是一直累加整个数组，因为要得到的是连续子数组，所以是连续遍历累加，但是累加的过程中，要记录当前计算出来的前缀和里面；
+     * 这里要的其实就是： i...k 中间差是否 = k; 因为用 sum_i  -  sum_k； 等到的就是 i...k 的连续子数组空间
+     */
+    const len = nums.length
+    const preSum = new Map()
+    let count = 0
+    let sum_i = 0
+    preSum.set(0, 1)
+
+    for (let i = 0; i < len; i++) {
+        sum_i += nums[i]
+
+        let sum_k = sum_i - k
+
+        if (preSum.has(sum_k)) {
+            count += preSum.get(sum_k)
+        }
+
+        preSum.set(sum_i, (preSum.get(sum_i) || 0) + 1)
+    }
+    return count
+}
