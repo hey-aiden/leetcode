@@ -128,3 +128,54 @@ class Solution:
                 sum += account[j]
             max_wealth = max(max_wealth, sum)
         return max_wealth
+
+
+"""
+1475. 商品折扣后的最终价格
+
+给你一个数组 prices ，其中 prices[i] 是商店里第 i 件商品的价格。
+
+商店里正在进行促销活动，如果你要买第 i 件商品，那么你可以得到与 prices[j] 相等的折扣
+其中 j 是满足 j > i 且 prices[j] <= prices[i] 的 最小下标 ，如果没有满足条件的 j ，你将没有任何折扣
+
+请你返回一个数组，数组中第 i 个元素是折扣后你购买商品 i 最终需要支付的价格
+
+"""
+
+
+class Solution:
+    def finalPrices(self, prices: list[int]) -> list[int]:
+        res = [-1] * len(prices)
+        for i in range(len(prices)):
+            price = prices[i]
+            for j in range(i + 1, len(prices)):
+                if prices[j] <= price:
+                    res[i] = price - prices[j]
+                    break
+            if res[i] == -1:
+                res[i] = price
+        return res
+
+
+"""
+844. 比较含退格的字符串
+给定 s 和 t 两个字符串，当它们分别被输入到空白的文本编辑器后，如果两者相等，返回 true 。# 代表退格字符。
+注意：如果对空文本输入退格字符，文本继续为空
+
+输入：s = "ab#c", t = "ad#c" 输出：true 解释：s 和 t 都会变成 "ac"。
+"""
+
+
+class Solution:
+    def backspaceCompare(self, s: str, t: str) -> bool:
+        return self.mergeStr(s) == self.mergeStr(t)
+
+    def mergeStr(self, s) -> str:
+        temp_list = []
+        for i in range(len(s)):
+            if s[i] == "#" and temp_list:
+                temp_list.pop()
+            else:
+                if s[i] != "#":
+                    temp_list.append(s[i])
+        return "".join(temp_list)

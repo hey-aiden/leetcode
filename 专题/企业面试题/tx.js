@@ -578,3 +578,147 @@ var flat = function (arr, n) {
 
     return res
 }
+
+/**
+ * 1438. 绝对差不超过限制的最长连续子数组
+ * 给你一个整数数组 nums ，和一个表示限制的整数 limit
+ * 请你返回最长连续子数组的长度，该子数组中的任意两个元素之间的绝对差必须小于或者等于 limit
+ *
+ * 输入：nums = [8,2,4,7], limit = 4 输出：2
+ * 输入：nums = [10,1,2,4,7,2], limit = 5 输出：4 解释：满足题意的最长子数组是 [2,4,7,2]，其最大绝对差 |2-7| = 5 <= 5 。
+ *
+ * 返回的是 最大长度
+ */
+var longestSubarray = function (nums, limit) {
+    // 这里的滑动窗口，会超时
+    const len = nums.length
+    let right = 1
+    const tempList = [nums[0]]
+    let res = 1
+    while (right < len) {
+        tempList.push(nums[right])
+        while (!checkLimit()) {
+            tempList.shift()
+        }
+        res = Math.max(res, tempList.length)
+        right++
+    }
+    function checkLimit() {
+        const max = Math.max(...tempList)
+        const min = Math.min(...tempList)
+        if (max - min > limit) return false
+        return true
+    }
+    return res
+
+    // 优化 - 维护一个单调递增队列
+    class QueueMin {
+        constructor() {
+            this.queue = []
+        }
+        enqueue(val) {
+            while (val < this.queue[this.queue.length - 1]) {
+                this.queue.pop()
+            }
+            this.queue.push(val)
+        }
+        dequeue(val) {
+            if (val === this.min()) {
+                this.queue.shift()
+            }
+        }
+        min() {
+            return this.queue[0]
+        }
+        size() {
+            return this.queue.length
+        }
+    }
+    class QueueMax {
+        constructor() {
+            this.queue = []
+        }
+        enqueue(val) {
+            while (val > this.queue[this.queue.length - 1]) {
+                this.queue.pop()
+            }
+            this.queue.push(val)
+        }
+        dequeue(val) {
+            if (val === this.max()) {
+                this.queue.shift()
+            }
+        }
+        max() {
+            return this.queue[0]
+        }
+        size() {
+            return this.queue.length
+        }
+    }
+    const minQueue = new QueueMin()
+    minQueue.enqueue(nums[0])
+
+    const maxQueue = new QueueMax()
+    maxQueue.enqueue(nums[0])
+
+    const len = nums.length
+    let left = 0,
+        right = 1,
+        res = 1
+
+    while (right < len) {
+        const num = nums[right]
+        minQueue.enqueue(num)
+        maxQueue.enqueue(num)
+
+        while (minQueue.size() && maxQueue.size() && maxQueue.max() - minQueue.min() > limit) {
+            minQueue.dequeue(nums[left])
+            maxQueue.dequeue(nums[left])
+            left++
+        }
+
+        res = Math.max(res, right - left + 1)
+        right++
+    }
+
+    return res
+}
+
+/**
+ * 735. 小行星碰撞
+ * 给定一个整数数组 asteroids，表示在同一行的小行星。数组中小行星的索引表示它们在空间中的相对位置。
+ * 对于数组中的每一个元素，其绝对值表示小行星的大小，正负表示小行星的移动方向（正表示向右移动，负表示向左移动）。每一颗小行星以相同的速度移动。
+ *
+ * 找出碰撞后剩下的所有小行星。
+ *
+ * 碰撞规则：两个小行星相互碰撞，较小的小行星会爆炸。如果两颗小行星大小相同，则两颗小行星都会爆炸。两颗移动方向相同的小行星，永远不会发生碰撞
+ */
+var asteroidCollision = function (asteroids) {
+    const rightStack = []
+    const leftStack = []
+    const res = []
+
+    for (const asteroid of asteroids) {
+        if (asteroid < 0) {
+            while (Math.abs(asteroid) > rightStack[rightStack.length - 1]) {
+                rightStack.pop()
+            }
+            if (Math.abs(asteroid) === rightStack[rightStack.length - 1]) {
+                rightStack.pop()
+                continue
+            }
+            if (rightStack.length === 0) {
+                res.push(asteroid)
+            }
+        } else {
+            rightStack.push(asteroid)
+        }
+    }
+    // return [...res, ...rightStack]
+
+    while (rightStack.length) {
+        res.push(rightStack.shift())
+    }
+    return res
+}
