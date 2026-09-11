@@ -179,3 +179,5 @@ class Solution:
                 if s[i] != "#":
                     temp_list.append(s[i])
         return "".join(temp_list)
+
+
