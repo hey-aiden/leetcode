@@ -527,3 +527,57 @@ var totalFruit = function (fruits) {
     }
     return res
 }
+
+/**
+ * LCR 143. 子结构判断
+ * 给定两棵二叉树 tree1 和 tree2，判断 tree2 是否以 tree1 的某个节点为根的子树具有 相同的结构和节点值
+ * 注意，空树 不会是以 tree1 的某个节点为根的子树具有 相同的结构和节点值
+ */
+var isSubStructure = function (A, B) {
+    if (B === null || A == null) return false
+
+    function dfs(nodeA, nodeB) {
+        // 节点B已经匹配完毕，直接返回true
+        if (nodeB === null) return true
+        // 节点A/B值不一致，返回false
+        if (nodeA === null || nodeA.val !== nodeB.val) return false
+        return dfs(nodeA.left, nodeB.left) && dfs(nodeA.right, nodeB.right)
+    }
+
+    return dfs(A, B) || isSubStructure(A.left, B) || isSubStructure(A.right, B)
+}
+
+/**
+ * 1884. 鸡蛋掉落-两枚鸡蛋
+ */
+var twoEggDrop = function (n) {
+    // 找出 k 枚鸡蛋掉落，返回有效 n 的最少操作次数
+    const memo = new Map()
+    function dp(k, n) {
+        if (n === 0) return 0
+        if (k === 1) return n // 只剩1枚鸡蛋时，n层楼就要测试n次才能确定哪一层是分界
+        const key = k + ':' + n
+        if (memo.has(key)) return memo.get(key)
+        let res = Infinity
+        let low = 1,
+            high = n
+        while (low <= high) {
+            let mid = Math.floor((low + high) / 2)
+            // 第n层楼碎了
+            const broke = dp(k - 1, mid - 1)
+            // 第n层楼没碎，可以继续
+            const not_broke = dp(k, n - mid)
+
+            if (broke > not_broke) {
+                high = mid - 1
+                res = Math.min(res, broke + 1)
+            } else {
+                low = mid + 1
+                res = Math.min(res, not_broke + 1)
+            }
+        }
+        memo.set(key, res)
+        return res
+    }
+    return dp(2, n)
+}
