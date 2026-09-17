@@ -125,3 +125,49 @@ var generateParenthesis = function (n) {
     trackingBack(n, n, [])
     return res
 }
+
+/**
+ * LCR 082. 组合总和 II
+ * 给定一个可能有重复数字的整数数组 candidates 和一个目标数 target
+ * 找出 candidates 中所有可以使数字和为 target 的组合
+ *
+ * 输入：candidates = [10,1,2,7,6,1,5] -> [1,1,2,5,6,7,10], target = 8
+ * 输出： [ [1,1,6], [1,2,5], [1,7], [2,6] ]
+ *
+ * candidates 中的每个数字在每个组合中只能使用一次，解集不能包含重复的组合 **
+ *
+ */
+var combinationSum2 = function (candidates, target) {
+    const len = candidates.length
+    const res = []
+    const sumList = []
+    candidates.sort((a, b) => a - b)
+
+    function trackingBack(index, sum) {
+        if (sum === target) {
+            res.push([...sumList])
+            return
+        }
+        if (sum > target) return
+        for (let i = index; i < len; i++) {
+            const num = candidates[i]
+            // 同层去重，所以要 i > index; 保证当前的i是基于本次循环中的i遍历，
+            // 比如[1,1,2],第一次for循环遍历1，在下一次回溯到1时，i = index = 1, 此时虽然i=i-1的值，但是i同样等于当前Index，所以第二个1可以继续用；
+            // 当外层for循环遍历到第二个1时，满足 i > index && i = i-1；跳出遍历，保证第二个1不会继续使用
+            //   第一层：
+            //     []
+            //    / \
+            //   1   1   ← 第二个 1 要跳过
+            //  /
+            // 1          ← 下一层可以使用第二个 1
+            if (i > index && candidates[i] == candidates[i - 1]) continue
+            if (num > target) return
+            sumList.push(num)
+            trackingBack(i + 1, sum + num)
+            sumList.pop()
+        }
+    }
+
+    trackingBack(0, 0)
+    return res
+}
