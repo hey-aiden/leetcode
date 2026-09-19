@@ -315,8 +315,29 @@ var restoreIpAddresses = function (s) {
  * 78. 子集
  * 给你一个整数数组 nums ，数组中的元素 互不相同 。返回该数组所有可能的子集（幂集）。
  * 解集 不能 包含重复的子集。你可以按 任意顺序 返回解集
+ *
+ * 输入：nums = [1,2,3] 输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]
  */
-var subsets = function (nums) {}
+var subsets = function (nums) {
+    const len = nums.length
+
+    const res = []
+    const list = []
+
+    function trackingBack(start) {
+        res.push([...list])
+        if (start >= len) return
+        for (let i = start; i < len; i++) {
+            list.push(nums[i])
+            trackingBack(i + 1)
+            list.pop()
+        }
+    }
+
+    trackingBack(0)
+
+    return res
+}
 
 /**
  * 90. 子集 II
@@ -329,12 +350,15 @@ var subsets = function (nums) {}
 var subsetsWithDup = function (nums) {
     const len = nums.length
 
+    nums.sort((a, b) => a - b)
+
     const res = []
     const temp = []
 
     function trackingBack(start) {
         res.push([...temp])
         for (let i = start; i < len; i++) {
+            if (i > start && nums[i] === nums[i - 1]) continue
             temp.push(nums[i])
             trackingBack(i + 1)
             temp.pop()
