@@ -583,7 +583,7 @@ var twoEggDrop = function (n) {
 }
 
 /**
- * 491. 非递减子序列
+ * 491. 非递减子序列 - 递增子序列
  * 给你一个整数数组 nums ，找出并返回所有该数组中不同的递增子序列，递增子序列中 至少有两个元素
  *
  * 数组中可能含有重复元素，如出现两个整数相等，也可以视作递增序列的一种特殊情况
@@ -591,4 +591,34 @@ var twoEggDrop = function (n) {
  * 输入：nums = [4,6,7,7] 输出：[[4,6],[4,6,7],[4,6,7,7],[4,7],[4,7,7],[6,7],[6,7,7],[7,7]]
  *
  */
-var findSubsequences = function (nums) {}
+var findSubsequences = function (nums) {
+    const len = nums.length
+
+    const res = []
+    const temp = []
+
+    /**
+     * 1. 先找到所有的子序列？
+     * 2. 找到符合的递增子序列？
+     */
+
+    function backTracking(start) {
+        if (temp.length > 1) {
+            res.push([...temp])
+        }
+        const usedNum = new Set()
+        for (let i = start; i < len; i++) {
+            if (usedNum.has(nums[i])) continue
+            if (temp.length && nums[i] < temp[temp.length - 1]) continue
+
+            usedNum.add(nums[i])
+            temp.push(nums[i])
+
+            backTracking(i + 1)
+
+            temp.pop()
+        }
+    }
+    backTracking(0)
+    return res
+}
