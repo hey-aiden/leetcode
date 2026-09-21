@@ -368,3 +368,74 @@ var subsetsWithDup = function (nums) {
 
     return res
 }
+
+/**
+ * LCR 083. 全排列
+ * 给定一个不含重复数字的整数数组 nums ，返回其 所有可能的全排列 。可以 按任意顺序 返回答案
+ *
+ * 输入：nums = [1,2,3] 输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+ *
+ */
+var permute = function (nums) {
+    const len = nums.length
+
+    const res = []
+    const temp = []
+    // const numSet = new Set()
+    const numUsed = Array(len).fill(0)
+
+    function trackingBack() {
+        if (temp.length === len) {
+            res.push([...temp])
+            return
+        }
+        for (let i = 0; i < len; i++) {
+            // if (numSet.has(nums[i])) continue
+            if (numUsed[i] === 1) continue
+            temp.push(nums[i])
+            // numSet.add(nums[i])
+            numUsed[i] = 1
+            trackingBack()
+            temp.pop()
+            // numSet.delete(nums[i])
+            numUsed[i] = 0
+        }
+    }
+
+    trackingBack()
+
+    return res
+}
+
+/**
+ * 47. 全排列 II
+ * 给定一个可包含重复数字的序列 nums ，按任意顺序 返回所有不重复的全排列
+ * 输入：nums = [1,1,2] 输出： [[1,1,2], [1,2,1], [2,1,1]]
+ */
+var permuteUnique = function (nums) {
+    const len = nums.length
+    const res = []
+    const temp = []
+    const numUsed = Array(len).fill(0)
+    nums.sort((a, b) => a - b)
+
+    function trackingBack() {
+        if (temp.length === len) {
+            res.push([...temp])
+            return
+        }
+        for (let i = 0; i < len; i++) {
+            if (numUsed[i] === 1) continue
+            // 同层去重
+            if (i > 0 && nums[i] === nums[i - 1] && numUsed[i - 1] === 0) continue
+            const num = nums[i]
+            temp.push(num)
+            numUsed[i] = 1
+            trackingBack()
+            temp.pop()
+            numUsed[i] = 0
+        }
+    }
+    trackingBack()
+    return res
+}
