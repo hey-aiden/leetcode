@@ -44,3 +44,57 @@ var minCuttingCost = function (n, m, k) {
 
     return cost(n) + cost(m)
 }
+
+/**
+ * 86. 分隔链表
+ * 给你一个链表的头节点 head 和一个特定值 x ，请你对链表进行分隔，使得所有 小于 x 的节点都出现在 大于或等于 x 的节点之前。
+ *
+ * 输入：head = [1,4,3,2,5,2], x = 3 输出：[1,2,2,4,3,5]
+ */
+var partition = function (head, x) {
+    if (head === null) return head
+    let cur = head
+    let minHead = new ListNode()
+    let maxHead = new ListNode()
+    let res = minHead
+    let maxTail = maxHead
+    while (cur !== null) {
+        let next = cur.next
+        cur.next = null
+        if (cur.val < x) {
+            // 站队左侧
+            minHead.next = cur
+            minHead = minHead.next
+        } else {
+            maxHead.next = cur
+            maxHead = maxHead.next
+        }
+        cur = next
+    }
+    minHead.next = maxTail.next
+
+    return res.next
+
+    // 标准结构 - 优化变量名
+    const leftDummy = new ListNode()
+    const rightDummy = new ListNode()
+    let leftTail = leftDummy
+    let rightTail = rightDummy
+    let cur = head
+    while (cur) {
+        const nextNode = cur.next
+        cur.next = null
+        if (cur.val < x) {
+            leftTail.next = cur
+            leftTail = leftTail.next
+        } else {
+            rightTail.next = cur
+            rightTail = rightTail.next
+        }
+        cur = nextNode
+    }
+
+    leftTail.next = rightDummy.next
+
+    return leftDummy.next
+}
