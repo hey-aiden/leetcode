@@ -98,3 +98,42 @@ var partition = function (head, x) {
 
     return leftDummy.next
 }
+
+/**
+ * 109. 有序链表转换二叉搜索树
+ * 给定一个单链表的头节点  head ，其中的元素 按升序排序 ，将其转换为 平衡 二叉搜索树
+ * 二叉搜索树：中序遍历是递增序列；
+ * 平衡二叉树：高度差小于1 - |左子树高度 - 右子树高度| <= 1
+ */
+var sortedListToBST = function (head) {
+    /**
+     * 转成平衡二叉树：二分法取root节点
+     * 1. 先遍历链表，这样才知道元素长度；
+     * 2. 基于遍历后的元素数组，构建平衡二叉搜索树
+     */
+
+    const numList = []
+    while (head !== null) {
+        numList.push(head.val)
+        head = head.next
+    }
+
+    function buildTree(list) {
+        if (list.length === 0) return null
+        const mid = Math.floor(list.length / 2)
+
+        const root = new TreeNode(list[mid])
+
+        root.left = buildTree(list.slice(0, mid))
+        root.right = buildTree(list.slice(mid + 1, list.length))
+
+        return root
+    }
+
+    return buildTree(numList)
+}
+
+/**
+ * 117. 填充每个节点的下一个右侧节点指针 II
+ */
+var connect = function (root) {}
