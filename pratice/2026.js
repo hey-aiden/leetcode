@@ -86,7 +86,7 @@ var partition = function (head, x) {
         cur.next = null
         if (cur.val < x) {
             leftTail.next = cur
-            leftTail = leftTail.next
+            leftTail = leftTail.next // 通过对leftTail的重新赋值，取消了对leftDummy的引用依赖，解除了leftTail-leftDummy的引用绑定
         } else {
             rightTail.next = cur
             rightTail = rightTail.next
@@ -188,4 +188,43 @@ var connect = function (root) {
         }
     }
     return root
+}
+
+/**
+ * 147. 对链表进行插入排序
+ * 给定单个链表的头 head ，使用 插入排序 对链表进行排序，并返回 排序后链表的头
+ *
+ * 插入排序 算法的步骤:
+ * 1. 插入排序是迭代的，每次只移动一个元素，直到所有元素可以形成一个有序的输出列表;
+ * 2. 每次迭代中，插入排序只从输入数据中移除一个待排序的元素，找到它在序列中适当的位置，并将其插入;
+ * 3. 重复直到所有输入数据插入完为止
+ */
+var insertionSortList = function (head) {
+    if (head === null) return head
+
+    const dummyHead = new ListNode()
+    dummyHead.next = head
+
+    // 定义一个有效排序的节点和一个当前节点
+    let lastSorted = head,
+        cur = head.next
+
+    while (cur !== null) {
+        if (lastSorted.val <= cur.val) {
+            // 如果最终的有效排序节点仍然小于当前节点，那么不需要移动位置，排序节点往后移动
+            lastSorted = lastSorted.next
+        } else {
+            let prev = dummyHead
+            while (prev.next.val <= cur.val) {
+                // prev: 找到比cur.val小的最后一个数
+                prev = prev.next
+            }
+            lastSorted.next = cur.next
+            // 将cur插入到prev - prev.next之间
+            cur.next = prev.next
+            prev.next = cur
+        }
+        cur = lastSorted.next
+    }
+    return dummyHead.next
 }
