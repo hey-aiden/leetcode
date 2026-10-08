@@ -136,4 +136,56 @@ var sortedListToBST = function (head) {
 /**
  * 117. 填充每个节点的下一个右侧节点指针 II
  */
-var connect = function (root) {}
+var connect = function (root) {
+    if (root === null) return root
+
+    const stack = [root]
+
+    while (stack.length) {
+        let prev = stack.shift()
+        const len = stack.length
+
+        if (prev.left && prev.left !== null) stack.push(prev.left)
+        if (prev.right && prev.right !== null) stack.push(prev.right)
+
+        if (stack.length === 0) {
+            prev.next = null
+        } else {
+            let count = 0
+            while (count < len) {
+                const cur = stack.shift()
+                prev.next = cur
+                prev = cur
+                if (prev.left && prev.left !== null) stack.push(prev.left)
+                if (prev.right && prev.right !== null) stack.push(prev.right)
+                count++
+            }
+            prev.next = null
+        }
+    }
+    return root
+
+    // 精简版
+    if (root === null) return root
+    const queue = [root]
+    while (queue.length) {
+        const len = queue.length
+        let last = null
+        for (let i = 0; i < len; i++) {
+            const node = queue.shift()
+            if (node.left !== null) {
+                queue.push(node.left)
+            }
+            if (node.right !== null) {
+                queue.push(node.right)
+            }
+
+            if (i > 0) {
+                last.next = node
+            }
+
+            last = node
+        }
+    }
+    return root
+}
