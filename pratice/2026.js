@@ -228,3 +228,54 @@ var insertionSortList = function (head) {
     }
     return dummyHead.next
 }
+
+/**
+ * 3507. 移除最小数对使数组有序 I
+ * 给你一个数组 nums，你可以执行以下操作任意次数： 选择 相邻 元素对中 和最小 的一对。如果存在多个这样的对，选择最左边的一个。 用它们的和替换这对元素。
+ * 返回将数组变为 非递减 所需的 最小操作次数 。
+ * 输入： nums = [5,2,3,1] 输出： 2 解释： 元素对 (3,1) 的和最小，为 4。替换后 nums = [5,2,4]。 元素对 (2,4) 的和为 6。替换后 nums = [5,6]。 数组 nums 在两次操作后变为非递减。
+ * 输入： nums = [1,2,2] 输出： 0 解释： 数组 nums 已经是非递减的。
+ *
+ * 最终的数组要满足是非递减的；
+ */
+var minimumPairRemoval = function (nums) {
+    // 那就倒序处理，如果遇到比左边小的，那么处理和 - 思路不对
+    // const len = nums.length
+    // let count = 0
+    // let tailSum = nums[len - 1]
+    // for (let i = len - 2; i >= 0; i--) {
+    //     if (nums[i] > tailSum) {
+    //         count++
+    //         tailSum = nums[i] + tailSum
+    //     } else {
+    //         tail = nums[i]
+    //     }
+    // }
+    // return count
+
+    // gpt思路
+    let count = 0
+    while (true) {
+        let sorted = true
+        for (let i = 1; i < nums.length; i++) {
+            if (nums[i] < nums[i - 1]) {
+                sorted = false
+                break
+            }
+        }
+        if (sorted) return count
+        let minSum = Infinity
+        let minIndex = 0
+        for (let i = 0; i < nums.length; i++) {
+            // 找到最小的相邻对
+            const sum = nums[i] + nums[i + 1]
+            if (sum < minSum) {
+                minSum = sum
+                minIndex = i
+            }
+        }
+        nums[minIndex] = minSum
+        nums.splice(minIndex + 1, 1)
+        count++
+    }
+}
