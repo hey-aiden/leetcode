@@ -279,3 +279,97 @@ var minimumPairRemoval = function (nums) {
         count++
     }
 }
+
+/**
+ * 数据流中的第 K 大元素
+ * 设计一个找到数据流中第 k 大元素的类（class）。注意是排序后的第 k 大元素，不是第 k 个不同的元素
+ *
+ * KthLargest(int k, int[] nums) 使用整数 k 和整数流 nums 初始化对象
+ * int add(int val) 将 val 插入数据流 nums 后，返回当前数据流中第 k 大的元素
+ *
+ * 输入： ["KthLargest", "add", "add", "add", "add", "add"] [[3, [4, 5, 8, 2]], [3], [5], [10], [9], [4]]
+ * 输出： [null, 4, 5, 5, 8, 8]
+ * 解释： KthLargest kthLargest = new KthLargest(3, [4, 5, 8, 2]);
+ * kthLargest.add(3);   // return 4
+ * kthLargest.add(5);   // return 5
+ * kthLargest.add(10);  // return 5
+ * kthLargest.add(9);   // return 8
+ * kthLargest.add(4);   // return 8
+ */
+var TopK = () => {
+    class SmallHeap {
+        constructor() {
+            this.queue = []
+        }
+        size() {
+            return this.queue.length
+        }
+        // 推入元素，末尾追加，所以需要向上对比，找到到对应的位置
+        push(item) {
+            this.queue.push(item)
+            // 上浮小顶堆, 如果追加节点小于父节点，那么交换位置，直到找到对应的位置
+            let index = this.size() - 1
+            let parent = Math.floor((index - 1) / 2)
+            while (parent >= 0 && this.queue[parent] > this.queue[index]) {
+                ;[this.queue[index], this.queue[parent]] = [this.queue[parent], this.queue[index]]
+                index = parent
+                parent = Math.floor((index - 1) / 2)
+            }
+            return this.queue[0]
+        }
+        // 弹出元素，弹出栈顶元素，因为只要满足比栈顶大，那么就可以替换栈顶
+        pop() {
+            if (this.size() <= 1) {
+                return this.queue.pop()
+            }
+            const out = this.queue[0] // 要弹出的元素
+            this.queue[0] = this.queue.pop() // 将最后一个元素放到栈顶
+            let index = 0,
+                left = 1,
+                replaceIndex = this.queue[left] > this.queue[left + 1] ? left + 1 : left
+            // 下沉小顶堆
+            while (replaceIndex < this.size() && this.queue[replaceIndex] < this.queue[index]) {
+                ;[this.queue[index], this.queue[replaceIndex]] = [this.queue[replaceIndex], this.queue[index]]
+                index = replaceIndex
+                left = index * 2 + 1
+                replaceIndex = this.queue[left] > this.queue[left + 1] ? left + 1 : left
+            }
+            return out
+        }
+    }
+
+    /**
+     * @param {number} k
+     * @param {number[]} nums
+     */
+    var KthLargest = function (k, nums) {
+        this.limit = k
+        this.heap = new SmallHeap()
+        console.log(nums, 'Kk')
+        for (let i = 0; i < nums.length; i++) {
+            if (this.heap.size() < k) {
+                this.heap.push(nums[i])
+            } else if (nums[i] >= this.heap.queue[0]) {
+                this.heap.pop()
+                this.heap.push(nums[i])
+            }
+        }
+        console.log(this.heap.size(), k, this.heap.queue)
+    }
+
+    /**
+     * @param {number} val
+     * @return {number}
+     */
+    KthLargest.prototype.add = function (val) {
+        if (this.heap.size() < this.limit) {
+            this.heap.push(val)
+        } else if (val >= this.heap.queue[0]) {
+            this.heap.pop()
+            this.heap.push(val)
+            console.log('add: ', val, this.heap.queue[0])
+        }
+        return this.heap.queue[0]
+        // console.log(this.heap.queue)
+    }
+}
